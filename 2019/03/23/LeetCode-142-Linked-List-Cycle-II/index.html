@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    
+
+    
+
+    
+
+
+
+    <meta charset="utf-8">
+    
+    
+    
+    
+    <title>LeetCode - 142. Linked List Cycle II | Songkc&#39;s Blog | Talk is cheap, show me the code.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="theme-color" content="#3F51B5">
+    
+    
+    <meta name="keywords" content="LeetCode,链表">
+    <meta name="description" content="DescriptionGiven a linked list, return the node where the cycle begins. If there is no cycle, return null. To represent a cycle in the given linked list, we use an integer pos which represents the pos">
+<meta name="keywords" content="LeetCode,链表">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LeetCode - 142. Linked List Cycle II">
+<meta property="og:url" content="https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/index.html">
+<meta property="og:site_name" content="Songkc&#39;s Blog">
+<meta property="og:description" content="DescriptionGiven a linked list, return the node where the cycle begins. If there is no cycle, return null. To represent a cycle in the given linked list, we use an integer pos which represents the pos">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test1.png">
+<meta property="og:image" content="https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test2.png">
+<meta property="og:image" content="https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test3.png">
+<meta property="og:image" content="https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/cycle.png">
+<meta property="og:updated_time" content="2019-03-26T19:26:50.422Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="LeetCode - 142. Linked List Cycle II">
+<meta name="twitter:description" content="DescriptionGiven a linked list, return the node where the cycle begins. If there is no cycle, return null. To represent a cycle in the given linked list, we use an integer pos which represents the pos">
+<meta name="twitter:image" content="https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test1.png">
+    
+        <link rel="alternate" type="application/atom+xml" title="Songkc&#39;s Blog" href="/atom.xml">
+    
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.7.2">
+    <script>window.lazyScripts=[]</script>
+
+    <!-- custom head -->
+    
+
+</head>
+
+<body>
+    <div id="loading" class="active"></div>
+
+    <aside id="menu">
+  <div class="inner flex-row-vertical">
+    <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menu-off">
+        <i class="icon icon-lg icon-close"></i>
+    </a>
+    <div class="brand-wrap" style="background-image:url(/img/brand.jpg)">
+      <div class="brand">
+        <a href="/" class="avatar waves-effect waves-circle waves-light">
+          <img src="/img/avatar.jpg">
+        </a>
+        <hgroup class="introduce">
+          <h5 class="nickname">Songkc</h5>
+          <a href="mailto:weijia_sysu@163.com" title="weijia_sysu@163.com" class="mail">weijia_sysu@163.com</a>
+        </hgroup>
+      </div>
+    </div>
+    <div class="scroll-wrap flex-col">
+      <ul class="nav">
+        
+            <li class="waves-block waves-effect">
+              <a href="/">
+                <i class="icon icon-lg icon-home"></i>
+                Home
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/archives/">
+                <i class="icon icon-lg icon-archives"></i>
+                Archives
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/tags/">
+                <i class="icon icon-lg icon-tags"></i>
+                Tags
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/categories/">
+                <i class="icon icon-lg icon-th-list"></i>
+                Categories
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="https://github.com/songkc" target="_blank">
+                <i class="icon icon-lg icon-github"></i>
+                Github
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/about/">
+                <i class="icon icon-lg icon-user"></i>
+                About
+              </a>
+            </li>
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+
+    <main id="main">
+        <header class="top-header" id="header">
+    <div class="flex-row">
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light on" id="menu-toggle">
+          <i class="icon icon-lg icon-navicon"></i>
+        </a>
+        <div class="flex-col header-title ellipsis">LeetCode - 142. Linked List Cycle II</div>
+        
+        <div class="search-wrap" id="search-wrap">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+                <i class="icon icon-lg icon-chevron-left"></i>
+            </a>
+            <input type="text" id="key" class="search-input" autocomplete="off" placeholder="Search">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="search">
+                <i class="icon icon-lg icon-search"></i>
+            </a>
+        </div>
+        
+        
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menuShare">
+            <i class="icon icon-lg icon-share-alt"></i>
+        </a>
+        
+    </div>
+</header>
+<header class="content-header post-header">
+
+    <div class="container fade-scale">
+        <h1 class="title">LeetCode - 142. Linked List Cycle II</h1>
+        <h3 class="subtitle">
+            
+                <time datetime="2019-03-23T13:28:14.000Z" itemprop="datePublished" class="page-time">
+  2019-03-23
+</time>
+
+
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/LeetCode/">LeetCode</a></li></ul>
+
+            
+        
+    </h3></div>
+
+    
+
+
+</header>
+
+
+<div class="container body-wrap">
+    
+    <aside class="post-widget">
+        <nav class="post-toc-wrap post-toc-shrink" id="post-toc">
+            <h4>TOC</h4>
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Description"><span class="post-toc-number">1.</span> <span class="post-toc-text">Description</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Example"><span class="post-toc-number">2.</span> <span class="post-toc-text">Example</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#Example-1"><span class="post-toc-number">2.1.</span> <span class="post-toc-text">Example 1</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#Example-2"><span class="post-toc-number">2.2.</span> <span class="post-toc-text">Example 2</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#Example-3"><span class="post-toc-number">2.3.</span> <span class="post-toc-text">Example 3</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Interface"><span class="post-toc-number">3.</span> <span class="post-toc-text">Interface</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Solution"><span class="post-toc-number">4.</span> <span class="post-toc-text">Solution</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#使用-stl-map"><span class="post-toc-number">4.1.</span> <span class="post-toc-text">使用 stl::map</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#使用-stl-set"><span class="post-toc-number">4.2.</span> <span class="post-toc-text">使用 stl::set</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Improvement"><span class="post-toc-number">5.</span> <span class="post-toc-text">Improvement</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#使用快慢指针"><span class="post-toc-number">5.1.</span> <span class="post-toc-text">使用快慢指针</span></a></li></ol></li></ol>
+        </nav>
+    </aside>
+
+
+<article id="post-LeetCode-142-Linked-List-Cycle-II" class="post-article article-type-post fade" itemprop="blogPost">
+
+    <div class="post-card">
+        <h1 class="post-card-title">LeetCode - 142. Linked List Cycle II</h1>
+        <div class="post-meta">
+            <time class="post-time" title="2019-03-23 21:28:14" datetime="2019-03-23T13:28:14.000Z" itemprop="datePublished">2019-03-23</time>
+
+            
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/LeetCode/">LeetCode</a></li></ul>
+
+
+
+            
+
+        </div>
+        <div class="post-content" id="post-content" itemprop="postContent">
+            <h2 id="Description"><a href="#Description" class="headerlink" title="Description"></a>Description</h2><p>Given a linked list, return the node where the cycle begins. If there is no cycle, return <code>null</code>.</p>
+<p>To represent a cycle in the given linked list, we use an integer <code>pos</code> which represents the position (0-indexed) in the linked list where tail connects to. If <code>pos</code> is <code>-1</code>, then there is no cycle in the linked list.</p>
+<p><strong>Note:</strong> Do not modify the linked list.</p>
+<h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><h3 id="Example-1"><a href="#Example-1" class="headerlink" title="Example 1"></a>Example 1</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Input: head = [<span class="number">3</span>,<span class="number">2</span>,<span class="number">0</span>,<span class="number">-4</span>], pos = <span class="number">1</span></span><br><span class="line">Output: tail connects to node index <span class="number">1</span></span><br><span class="line">Explanation: There is a cycle in the linked <span class="built_in">list</span>, where tail connects to the</span><br><span class="line">second node.</span><br></pre></td></tr></table></figure>
+<figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test1.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<h3 id="Example-2"><a href="#Example-2" class="headerlink" title="Example 2"></a>Example 2</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Input: head = [<span class="number">1</span>,<span class="number">2</span>], pos = <span class="number">0</span></span><br><span class="line">Output: tail connects to node index <span class="number">0</span></span><br><span class="line">Explanation: There is a cycle in the linked <span class="built_in">list</span>, where tail connects to the</span><br><span class="line">first node.</span><br></pre></td></tr></table></figure>
+<figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test2.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<h3 id="Example-3"><a href="#Example-3" class="headerlink" title="Example 3"></a>Example 3</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Input: head = [<span class="number">1</span>], pos = <span class="number">-1</span></span><br><span class="line">Output: no cycle</span><br><span class="line">Explanation: There is no cycle in the linked <span class="built_in">list</span>.</span><br></pre></td></tr></table></figure>
+<figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/03/23/LeetCode-142-Linked-List-Cycle-II/circularlinkedlist_test3.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<h2 id="Interface"><a href="#Interface" class="headerlink" title="Interface"></a>Interface</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for singly-linked list.</span></span><br><span class="line"><span class="comment"> * struct ListNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     ListNode *next;</span></span><br><span class="line"><span class="comment"> *     ListNode(int x) : val(x), next(NULL) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">ListNode *<span class="title">detectCycle</span><span class="params">(ListNode *head)</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h2><h3 id="使用-stl-map"><a href="#使用-stl-map" class="headerlink" title="使用 stl::map"></a>使用 stl::map</h3><p><strong>map&lt;ListNode*, int&gt;</strong> 将 <strong>ListNode*</strong> 与 <strong>ListNode*</strong> 出现的次数进行对应，如果单链表中不存在环则，则遍历到尾结点的 <strong>next</strong> 指向的 <strong>nullptr</strong> 时就会结束遍历，返回 <strong>nullptr</strong>；而如果单链表中存在环，第一个出现次数大于 <strong>1</strong> 的结点即环的入口结点。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for singly-linked list.</span></span><br><span class="line"><span class="comment"> * struct ListNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     ListNode *next;</span></span><br><span class="line"><span class="comment"> *     ListNode(int x) : val(x), next(NULL) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">ListNode *<span class="title">detectCycle</span><span class="params">(ListNode *head)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (head == <span class="literal">nullptr</span>) <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        <span class="built_in">map</span>&lt;ListNode*, <span class="keyword">int</span>&gt; lmap;</span><br><span class="line">      	ListNode *node = head;</span><br><span class="line">        <span class="keyword">while</span> (node != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (lmap.count(node) &gt; <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">else</span> (lmap[node] = <span class="number">1</span>);</span><br><span class="line">            node = node-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> node;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="使用-stl-set"><a href="#使用-stl-set" class="headerlink" title="使用 stl::set"></a>使用 stl::set</h3><p>与使用 stl::map 的思路相似，故不再叙述。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for singly-linked list.</span></span><br><span class="line"><span class="comment"> * struct ListNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     ListNode *next;</span></span><br><span class="line"><span class="comment"> *     ListNode(int x) : val(x), next(NULL) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">ListNode *<span class="title">detectCycle</span><span class="params">(ListNode *head)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (head == <span class="literal">nullptr</span>) <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">        <span class="built_in">set</span>&lt;ListNode*&gt; nodeset;</span><br><span class="line">        <span class="keyword">while</span> (head != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (nodeset.count(head) &gt; <span class="number">0</span>) <span class="keyword">return</span> head;</span><br><span class="line">            nodeset.insert(head);</span><br><span class="line">            head = head-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="Improvement"><a href="#Improvement" class="headerlink" title="Improvement"></a>Improvement</h2><h3 id="使用快慢指针"><a href="#使用快慢指针" class="headerlink" title="使用快慢指针"></a>使用快慢指针</h3><p>设定两个指针，一个慢指针，一个快指针，慢指针一次走的距离是一个结点，而快指针一次走的距离是两个结点，即快指针的速度是慢指针的两倍。</p>
+<p>此时，会出现两种情况：</p>
+<ul>
+<li><p>单链表中不存在环则：快指针往后遍历的过程中，会遍历到 <strong>nullptr</strong> 结点，即单链表中不存在环，最后一个结点指向的是 <strong>nullptr</strong>。</p>
+</li>
+<li><p>单链表中存在环则：由于存在环，则快慢指针最后都会进入环中并在环中一直循环，由于快慢指针存在速度差，只要快慢指针一直在环中循环，最终会在环中的一个结点相遇，相遇时快指针至少在环中循环了一圈。</p>
+<p><img src="/2019/03/23/LeetCode-142-Linked-List-Cycle-II/cycle.png" alt=""></p>
+<ul>
+<li><p>如果这时快指针已经是在环里走了 <strong>1</strong> 圈（对应于非环部分较短的情况）：</p>
+<p>此时快指针走了 <strong>2(x + d) (0 &lt;= d)</strong> 距离，<strong>2(x + d) = x + y + d</strong> ，可得 <strong>x = y - d</strong> ，此时再同时从第一次相遇点和头结点出发，速度都为一个结点每次，最后两指针会在环入口结点处相遇。</p>
+</li>
+<li><p>如果这时快指针已经是在环里走了不止一圈，假设为 <strong>k</strong> 圈：</p>
+<p>此时快指针走了 <strong>2(x + d) (0 &lt;= d)​</strong> 距离，<strong>2(x + d) = x +ky + d​</strong>，可得 <strong>x = ky - d​</strong> ，此时再同时从第一次相遇点和头结点出发，速度都为一个结点每次，最后两指针也会在环入口结点处相遇。</p>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for singly-linked list.</span></span><br><span class="line"><span class="comment"> * struct ListNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     ListNode *next;</span></span><br><span class="line"><span class="comment"> *     ListNode(int x) : val(x), next(NULL) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">ListNode *<span class="title">detectCycle</span><span class="params">(ListNode *head)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (head == <span class="literal">nullptr</span>) <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">      	ListNode *slow = head, *fast = head;</span><br><span class="line">      	<span class="keyword">do</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (fast-&gt;next != <span class="literal">nullptr</span> &amp;&amp; fast-&gt;next-&gt;next != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">                slow = slow-&gt;next;</span><br><span class="line">                fast = fast-&gt;next-&gt;next;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">      	&#125; <span class="keyword">while</span> (slow != fast);</span><br><span class="line">      	fast = head;</span><br><span class="line">        <span class="keyword">while</span> (slow != fast) &#123;</span><br><span class="line">            slow = slow-&gt;next;</span><br><span class="line">            fast = fast-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> fast;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>详细思路参考：<a href="https://www.cnblogs.com/zhuzhenwei918/p/7491892.html" target="_blank" rel="noopener">一个链表中包含环，请找出该链表的环的入口结点</a></p>
+
+        </div>
+
+        <blockquote class="post-copyright">
+    
+    <div class="content">
+        
+
+        
+        如有疑问请联系作者，联系方式：weijia_sysu@163.com
+        
+    </div>
+    
+    <footer>
+        <a href="https://songkc.github.io">
+            <img src="/img/avatar.jpg" alt="Songkc">
+            Songkc
+        </a>
+    </footer>
+</blockquote>
+
+        
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;" class="page-reward-btn waves-effect waves-circle waves-light">赏</a>
+</div>
+
+
+
+        <div class="post-footer">
+            
+	<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LeetCode/">LeetCode</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/链表/">链表</a></li></ul>
+
+
+            
+<div class="page-share-wrap">
+    
+
+<div class="page-share" id="pageShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/&title=《LeetCode - 142. Linked List Cycle II》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/&title=《LeetCode - 142. Linked List Cycle II》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《LeetCode - 142. Linked List Cycle II》 — Songkc's Blog&url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+
+    <a href="javascript:;" id="shareFab" class="page-share-fab waves-effect waves-circle">
+        <i class="icon icon-share-alt icon-lg"></i>
+    </a>
+</div>
+
+
+
+        </div>
+    </div>
+
+    
+<nav class="post-nav flex-row flex-justify-between flex-row-reverse">
+  
+
+  
+    <div class="waves-block waves-effect next">
+      <a href="/2019/03/23/剑指Offer-链表中环的入口结点/" id="post-next" class="post-nav-link">
+        <div class="tips">Next <i class="icon icon-angle-right icon-lg icon-pl"></i></div>
+        <h4 class="title">剑指Offer - 链表中环的入口结点</h4>
+      </a>
+    </div>
+  
+</nav>
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+<div id="reward" class="page-modal reward-lay">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <h3 class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        谢谢大爷~
+        <i class="icon icon-quote-right"></i>
+    </h3>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/img/wechat.png" alt="打赏二维码">
+        </div>
+        
+        <label class="reward-toggle">
+            <input id="rewardToggle" type="checkbox" class="reward-toggle-check" data-wechat="/img/wechat.png" data-alipay="/img/alipay.png">
+            <div class="reward-toggle-ctrol">
+                <span class="reward-toggle-item wechat">微信</span>
+                <span class="reward-toggle-label"></span>
+                <span class="reward-toggle-item alipay">支付宝</span>
+            </div>
+        </label>
+        
+    </div>
+</div>
+
+
+
+</div>
+
+        <!-- <footer class="footer">
+    <div class="top">
+        
+
+        <p>
+            
+                <span><a href="/atom.xml" target="_blank" class="rss" title="rss"><i class="icon icon-lg icon-rss"></i></a></span>
+            
+            <span>This blog is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</span>
+        </p>
+    </div>
+    <div class="bottom">
+        <p><span>Songkc &copy; 2015 - 2019</span>
+            <span>
+                
+                Power by <a href="http://hexo.io/" target="_blank">Hexo</a> Theme <a href="https://github.com/yscoder/hexo-theme-indigo" target="_blank">indigo</a>
+            </span>
+        </p>
+    </div>
+</footer> -->
+
+    </main>
+    <div class="mask" id="mask"></div>
+<a href="javascript:;" id="gotop" class="waves-effect waves-circle waves-light"><span class="icon icon-lg icon-chevron-up"></span></a>
+
+
+
+<div class="global-share" id="globalShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/&title=《LeetCode - 142. Linked List Cycle II》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/&title=《LeetCode - 142. Linked List Cycle II》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《LeetCode - 142. Linked List Cycle II》 — Songkc's Blog&url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/03/23/LeetCode-142-Linked-List-Cycle-II/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+<div class="page-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAADeCAAAAAB3DOFrAAACsUlEQVR42u3aQW4jMQwEQP//0wmQ2yIZT5MUbS9QczICe1alg8Rt8vGIn6+f5+rz1fP7O1dvvvrV1RoOP3h4eHitpedLvFru88U9X2i+hvz7eHh4eNu85DLoHfenLoBk+/Dw8PA+jZcf7tWiuXrZ4OHh4f1fvMl2TPISPDw8vE/jVYOAPC+tRgl5IX44a8HDw8OLefMG2Os/v7S/h4eHhxdfCZNm2PNjPQl8eyv85214eHh4C7xqaypvffXGqhJwcgs8zv7zeHh4eBdnZu9Yz4/y/M29X/2xHjw8PLyX8KpxahIfzAe2kq384y94eHh4a7zqQEDOnkfGvSIbDw8Pb4+XjF5VW/X5FRId7qdGuPDw8PAO8apBQ+89vQP9QMCBh4eHt8zL2/yTz/lmTW45PDw8vHfxqtHtpGHWe8/NJuLh4eEt8OaxabX1lRTZ1VbZYiqMh4eHF4ezySuqpXNvE3uDCDf3Hh4eHt6AV23n52V38jmPg3vDYXh4eHgbvN6g1byYriJHMS4eHh7eUV5+cPeWW702JlFIFOPi4eHhjXmTxVXD2UlJnW8xHh4e3mt4efS5PWRQjZJvtgAPDw9vgZe3nfKFTr7Ti4BvtgMPDw9vgZeEodX4NT/uq6MJxx48PDy8AW8y6tRrWU02Iv8OHh4e3gavWs5OGl3zMDf/Cx4eHt57edXlVkl5YNEspvHw8PCO8iZLnDf4k3L8WMqCh4eHd4j3VXyiQvZQIJuzo5kyPDw8vEO8SRep1/ivDg1Mhhjw8PDw9ni98ale8HqqzVaIPPDw8PDWeHkpXC1tNxiFawwPDw/vrbw8VqiOHfRii+j/Cnh4eHgfw3v+ht641aTNdhNG4OHh4S3w8lI4OZTz2KL6q6TUxsPDw9vmTUaykpGC6lWRl+/H5s7w8PDwUt43eArFOn7u3PIAAAAASUVORK5CYII=" alt="微信分享二维码">
+</div>
+
+
+
+
+    <script src="//cdn.bootcss.com/node-waves/0.7.4/waves.min.js"></script>
+<script>
+var BLOG = { ROOT: '/', SHARE: true, REWARD: true };
+
+
+</script>
+
+<script src="/js/main.min.js?v=1.7.2"></script>
+
+
+<div class="search-panel" id="search-panel">
+    <ul class="search-result" id="search-result"></ul>
+</div>
+<template id="search-tpl">
+<li class="item">
+    <a href="{path}" class="waves-block waves-effect">
+        <div class="title ellipsis" title="{title}">{title}</div>
+        <div class="flex-row flex-middle">
+            <div class="tags ellipsis">
+                {tags}
+            </div>
+            <time class="flex-col time">{date}</time>
+        </div>
+    </a>
+</li>
+</template>
+
+<script src="/js/search.min.js?v=1.7.2" async></script>
+
+
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+
+
+
+
+<script>
+(function() {
+    var OriginTitile = document.title, titleTime;
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            document.title = 'o(一︿一+)o 死鬼去哪里了！';
+            clearTimeout(titleTime);
+        } else {
+            document.title = 'ヽ(✿ﾟ▽ﾟ)ノ 咦!回来了!';
+            titleTime = setTimeout(function() {
+                document.title = OriginTitile;
+            },2000);
+        }
+    });
+})();
+</script>
+
+
+
+</body>
+</html>

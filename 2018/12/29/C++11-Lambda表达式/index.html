@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    
+
+    
+
+    
+
+
+
+    <meta charset="utf-8">
+    
+    
+    
+    
+    <title>C++11 - Lambda 表达式 | Songkc&#39;s Blog | Talk is cheap, show me the code.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="theme-color" content="#3F51B5">
+    
+    
+    <meta name="keywords" content="C++,C++11">
+    <meta name="description" content="C++11 的一大亮点就是引入了 Lambda 表达式。利用 Lambda 表达式，可以方便的定义和创建匿名函数。 声明 Lambda 表达式Lambda 表达式完整的声明格式如下： 1[capture list] (params list) mutable exception-&amp;gt; return type &amp;#123; function body &amp;#125; 各项具体含义如下：  capt">
+<meta name="keywords" content="C++,C++11">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 - Lambda 表达式">
+<meta property="og:url" content="https://songkc.github.io/2018/12/29/C++11-Lambda表达式/index.html">
+<meta property="og:site_name" content="Songkc&#39;s Blog">
+<meta property="og:description" content="C++11 的一大亮点就是引入了 Lambda 表达式。利用 Lambda 表达式，可以方便的定义和创建匿名函数。 声明 Lambda 表达式Lambda 表达式完整的声明格式如下： 1[capture list] (params list) mutable exception-&amp;gt; return type &amp;#123; function body &amp;#125; 各项具体含义如下：  capt">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-03-31T18:56:22.652Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C++11 - Lambda 表达式">
+<meta name="twitter:description" content="C++11 的一大亮点就是引入了 Lambda 表达式。利用 Lambda 表达式，可以方便的定义和创建匿名函数。 声明 Lambda 表达式Lambda 表达式完整的声明格式如下： 1[capture list] (params list) mutable exception-&amp;gt; return type &amp;#123; function body &amp;#125; 各项具体含义如下：  capt">
+    
+        <link rel="alternate" type="application/atom+xml" title="Songkc&#39;s Blog" href="/atom.xml">
+    
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.7.2">
+    <script>window.lazyScripts=[]</script>
+
+    <!-- custom head -->
+    
+
+</head>
+
+<body>
+    <div id="loading" class="active"></div>
+
+    <aside id="menu">
+  <div class="inner flex-row-vertical">
+    <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menu-off">
+        <i class="icon icon-lg icon-close"></i>
+    </a>
+    <div class="brand-wrap" style="background-image:url(/img/brand.jpg)">
+      <div class="brand">
+        <a href="/" class="avatar waves-effect waves-circle waves-light">
+          <img src="/img/avatar.jpg">
+        </a>
+        <hgroup class="introduce">
+          <h5 class="nickname">Songkc</h5>
+          <a href="mailto:weijia_sysu@163.com" title="weijia_sysu@163.com" class="mail">weijia_sysu@163.com</a>
+        </hgroup>
+      </div>
+    </div>
+    <div class="scroll-wrap flex-col">
+      <ul class="nav">
+        
+            <li class="waves-block waves-effect">
+              <a href="/">
+                <i class="icon icon-lg icon-home"></i>
+                Home
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/archives/">
+                <i class="icon icon-lg icon-archives"></i>
+                Archives
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/tags/">
+                <i class="icon icon-lg icon-tags"></i>
+                Tags
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/categories/">
+                <i class="icon icon-lg icon-th-list"></i>
+                Categories
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="https://github.com/songkc" target="_blank">
+                <i class="icon icon-lg icon-github"></i>
+                Github
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/about/">
+                <i class="icon icon-lg icon-user"></i>
+                About
+              </a>
+            </li>
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+
+    <main id="main">
+        <header class="top-header" id="header">
+    <div class="flex-row">
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light on" id="menu-toggle">
+          <i class="icon icon-lg icon-navicon"></i>
+        </a>
+        <div class="flex-col header-title ellipsis">C++11 - Lambda 表达式</div>
+        
+        <div class="search-wrap" id="search-wrap">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+                <i class="icon icon-lg icon-chevron-left"></i>
+            </a>
+            <input type="text" id="key" class="search-input" autocomplete="off" placeholder="Search">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="search">
+                <i class="icon icon-lg icon-search"></i>
+            </a>
+        </div>
+        
+        
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menuShare">
+            <i class="icon icon-lg icon-share-alt"></i>
+        </a>
+        
+    </div>
+</header>
+<header class="content-header post-header">
+
+    <div class="container fade-scale">
+        <h1 class="title">C++11 - Lambda 表达式</h1>
+        <h3 class="subtitle">
+            
+                <time datetime="2018-12-29T09:01:42.000Z" itemprop="datePublished" class="page-time">
+  2018-12-29
+</time>
+
+
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/C/">C++</a></li></ul>
+
+            
+        
+    </h3></div>
+
+    
+
+
+</header>
+
+
+<div class="container body-wrap">
+    
+    <aside class="post-widget">
+        <nav class="post-toc-wrap post-toc-shrink" id="post-toc">
+            <h4>TOC</h4>
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#声明-Lambda-表达式"><span class="post-toc-number">1.</span> <span class="post-toc-text">声明 Lambda 表达式</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#捕获外部变量"><span class="post-toc-number">2.</span> <span class="post-toc-text">捕获外部变量</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#值捕获"><span class="post-toc-number">2.1.</span> <span class="post-toc-text">值捕获</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#引用捕获"><span class="post-toc-number">2.2.</span> <span class="post-toc-text">引用捕获</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#隐式捕获"><span class="post-toc-number">2.3.</span> <span class="post-toc-text">隐式捕获</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#混合方式"><span class="post-toc-number">2.4.</span> <span class="post-toc-text">混合方式</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#修改捕获变量"><span class="post-toc-number">3.</span> <span class="post-toc-text">修改捕获变量</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Lambda-表达式的参数"><span class="post-toc-number">4.</span> <span class="post-toc-text">Lambda 表达式的参数</span></a></li></ol>
+        </nav>
+    </aside>
+
+
+<article id="post-C++11-Lambda表达式" class="post-article article-type-post fade" itemprop="blogPost">
+
+    <div class="post-card">
+        <h1 class="post-card-title">C++11 - Lambda 表达式</h1>
+        <div class="post-meta">
+            <time class="post-time" title="2018-12-29 17:01:42" datetime="2018-12-29T09:01:42.000Z" itemprop="datePublished">2018-12-29</time>
+
+            
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/C/">C++</a></li></ul>
+
+
+
+            
+
+        </div>
+        <div class="post-content" id="post-content" itemprop="postContent">
+            <p>C++11 的一大亮点就是引入了 Lambda 表达式。利用 Lambda 表达式，可以方便的定义和创建匿名函数。</p>
+<h2 id="声明-Lambda-表达式"><a href="#声明-Lambda-表达式" class="headerlink" title="声明 Lambda 表达式"></a>声明 Lambda 表达式</h2><p>Lambda 表达式完整的声明格式如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[capture <span class="built_in">list</span>] (params <span class="built_in">list</span>) <span class="keyword">mutable</span> exception-&gt; <span class="keyword">return</span> type &#123; function body &#125;</span><br></pre></td></tr></table></figure>
+<p>各项具体含义如下：</p>
+<ol>
+<li>capture list：捕获外部变量列表</li>
+<li>params list：形参列表</li>
+<li>mutable：用来说用是否可以修改捕获的变量</li>
+<li>exception：异常设定</li>
+<li>return type：返回类型</li>
+<li>function body：函数体</li>
+</ol>
+<p>此外，我们还可以省略其中的某些成分来声明“不完整”的 Lambda 表达式，常见的有以下几种：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">序号</th>
+<th style="text-align:center">格式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">[capture list] (params list) -&gt; return type { function body }</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">[capture list] (params list) { function body }</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">[capture list] { function body }</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>格式 1 声明了 <strong>const</strong> 类型的表达式，这种类型的表达式不能修改捕获列表中的值。</li>
+<li>格式 2 省略了返回值类型，但编译器可以根据以下规则推断出 Lambda 表达式的返回类型：<ul>
+<li>如果 function body 中没有 <strong>return</strong> 语句，则返回值为 <strong>void</strong> 类型；</li>
+<li>如果 function body 中存在 <strong>return</strong> 语句，则该 Lambda 表达式的返回类型由 <strong>return</strong> 语句的返回类型确定。</li>
+</ul>
+</li>
+<li>格式 3 中省略了参数列表，类似普通函数中的无参函数。</li>
+</ul>
+<h2 id="捕获外部变量"><a href="#捕获外部变量" class="headerlink" title="捕获外部变量"></a>捕获外部变量</h2><p>Lambda 表达式可以使用其可见范围内的外部变量，但必须明确声明（明确声明哪些外部变量可以被该 Lambda 表达式使用）。那么，在哪里指定这些外部变量呢？Lambda 表达式通过在最前面的方括号 <code>[]</code> 来明确指明其内部可以访问的外部变量，这一过程也称作 Lambda 表达式“捕获”了外部变量。</p>
+<p>通过一个例子来直观地说明一下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">123</span>;</span><br><span class="line">    <span class="keyword">auto</span> f = [a] &#123; <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; <span class="built_in">endl</span>; &#125;; </span><br><span class="line">    f();  <span class="comment">// 输出：123</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//或通过“函数体”后面的‘()’传入参数</span></span><br><span class="line">    <span class="keyword">auto</span> x = [](<span class="keyword">int</span> a)&#123; <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; <span class="built_in">endl</span>; &#125;(<span class="number">123</span>); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这个例子先声明了一个整型变量 <strong>a</strong>，然后再创建 Lambda 表达式，该表达式“捕获”了变量 <strong>a</strong>，这样在 Lambda 表达式函数体中就可以获得该变量的值。</p>
+<p>类似参数传递方式（值传递、引入传递、指针传递），在Lambda表达式中，外部变量的捕获方式也有值捕获、引用捕获、隐式捕获。</p>
+<h3 id="值捕获"><a href="#值捕获" class="headerlink" title="值捕获"></a>值捕获</h3><p>值捕获和参数传递中的值传递类似，被捕获的变量的值在 Lambda 表达式创建时通过值拷贝的方式传入，因此随后对该变量的修改不会影响影响 Lambda 表达式中的值。示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">123</span>;</span><br><span class="line">    <span class="keyword">auto</span> f = [a] &#123; <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; <span class="built_in">endl</span>; &#125;; </span><br><span class="line">    a = <span class="number">321</span>;</span><br><span class="line">    f();  <span class="comment">// 输出：123</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里需要注意的是，如果以传值方式捕获外部变量，则在 Lambda 表达式函数体中不能修改该外部变量的值。</p>
+<h3 id="引用捕获"><a href="#引用捕获" class="headerlink" title="引用捕获"></a>引用捕获</h3><p>使用引用捕获一个外部变量，只需要在捕获列表变量前面加上一个引用说明符 <code>&amp;</code>。如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">123</span>;</span><br><span class="line">    <span class="keyword">auto</span> f = [&amp;a] &#123; <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; <span class="built_in">endl</span>; &#125;; </span><br><span class="line">    a = <span class="number">321</span>;</span><br><span class="line">    f();  <span class="comment">// 输出：321</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从示例中可以看出，引用捕获的变量使用的实际上就是该引用所绑定的对象。</p>
+<h3 id="隐式捕获"><a href="#隐式捕获" class="headerlink" title="隐式捕获"></a>隐式捕获</h3><p>上面的<strong>值捕获</strong>和<strong>引用捕获</strong>都需要我们在捕获列表中显式列出 Lambda 表达式中使用的外部变量。除此之外，我们还可以让编译器根据函数体中的代码来推断需要捕获哪些变量，这种方式称之为<strong>隐式捕获</strong>。隐式捕获有两种方式，分别是 <code>[=]</code> 和 <code>[&amp;]</code>。<code>[=]</code> 表示以值捕获的方式捕获外部变量，<code>[&amp;]</code> 表示以引用捕获的方式捕获外部变量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">123</span>;</span><br><span class="line">    <span class="keyword">auto</span> f = [=] &#123; <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; <span class="built_in">endl</span>; &#125;;      <span class="comment">// 隐式值捕获</span></span><br><span class="line">    a = <span class="number">321</span>;</span><br><span class="line">    f();    <span class="comment">// 输出：123</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> b = <span class="number">123</span>;</span><br><span class="line">    <span class="keyword">auto</span> func = [&amp;] &#123; <span class="built_in">cout</span> &lt;&lt; b &lt;&lt; <span class="built_in">endl</span>; &#125;;   <span class="comment">// 隐式引用捕获</span></span><br><span class="line">    b = <span class="number">321</span>;</span><br><span class="line">    func();  <span class="comment">// 输出：321</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="混合方式"><a href="#混合方式" class="headerlink" title="混合方式"></a>混合方式</h3><p>上面的例子，要么是值捕获，要么是引用捕获，Lambda 表达式还支持混合的方式捕获外部变量，混合方式主要是以上几种捕获方式的组合使用。</p>
+<p>总结一下，C++11 中的 Lambda 表达式捕获外部变量主要有以下形式：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">捕获形式</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">[]</td>
+<td style="text-align:center">不捕获任何外部变量</td>
+</tr>
+<tr>
+<td style="text-align:center">[变量名, …]</td>
+<td style="text-align:center">默认以值得形式捕获指定的多个外部变量（用逗号分隔），如果引用捕获，需要显示声明（使用&amp;说明符）</td>
+</tr>
+<tr>
+<td style="text-align:center">[this]</td>
+<td style="text-align:center">以值的形式捕获this指针</td>
+</tr>
+<tr>
+<td style="text-align:center">[=]</td>
+<td style="text-align:center">以值的形式捕获所有外部变量</td>
+</tr>
+<tr>
+<td style="text-align:center">[&amp;]</td>
+<td style="text-align:center">以引用形式捕获所有外部变量</td>
+</tr>
+<tr>
+<td style="text-align:center">[=, &amp;x]</td>
+<td style="text-align:center">变量x以引用形式捕获，其余变量以传值形式捕获</td>
+</tr>
+<tr>
+<td style="text-align:center">[&amp;, x]</td>
+<td style="text-align:center">变量x以值的形式捕获，其余变量以引用形式捕获</td>
+</tr>
+</tbody>
+</table>
+<h2 id="修改捕获变量"><a href="#修改捕获变量" class="headerlink" title="修改捕获变量"></a>修改捕获变量</h2><p>前面我们提到过，在 Lambda 表达式中，如果以传值方式捕获外部变量，则函数体中不能修改该外部变量，否则会引发编译错误。那么有没有办法可以修改值捕获的外部变量呢？这是就需要使用 <strong>mutable</strong> 关键字，该关键字用以说明表达式体内的代码可以修改值捕获的变量，示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> a = <span class="number">123</span>;</span><br><span class="line">    <span class="keyword">auto</span> f = [a]()<span class="keyword">mutable</span> &#123; <span class="built_in">cout</span> &lt;&lt; ++a; &#125;;  <span class="comment">// OK</span></span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; <span class="built_in">endl</span>;  <span class="comment">// 输出：123</span></span><br><span class="line">    f();  <span class="comment">// 输出：124</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Lambda-表达式的参数"><a href="#Lambda-表达式的参数" class="headerlink" title="Lambda 表达式的参数"></a>Lambda 表达式的参数</h2><p>Lambda 表达式的参数和普通函数的参数类似，那么这里为什么还要拿出来说一下呢？原因是在 Lambda 表达式中传递参数还有一些限制，主要有以下几点：</p>
+<ol>
+<li>参数列表中不能有默认参数</li>
+<li>不支持可变参数</li>
+<li>所有参数必须有参数名</li>
+</ol>
+
+        </div>
+
+        <blockquote class="post-copyright">
+    
+    <div class="content">
+        
+
+        
+        如有疑问请联系作者，联系方式：weijia_sysu@163.com
+        
+    </div>
+    
+    <footer>
+        <a href="https://songkc.github.io">
+            <img src="/img/avatar.jpg" alt="Songkc">
+            Songkc
+        </a>
+    </footer>
+</blockquote>
+
+        
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;" class="page-reward-btn waves-effect waves-circle waves-light">赏</a>
+</div>
+
+
+
+        <div class="post-footer">
+            
+	<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/">C++</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C-11/">C++11</a></li></ul>
+
+
+            
+<div class="page-share-wrap">
+    
+
+<div class="page-share" id="pageShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/&title=《C++11 - Lambda 表达式》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/&title=《C++11 - Lambda 表达式》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《C++11 - Lambda 表达式》 — Songkc's Blog&url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+
+    <a href="javascript:;" id="shareFab" class="page-share-fab waves-effect waves-circle">
+        <i class="icon icon-share-alt icon-lg"></i>
+    </a>
+</div>
+
+
+
+        </div>
+    </div>
+
+    
+<nav class="post-nav flex-row flex-justify-between">
+  
+    <div class="waves-block waves-effect prev">
+      <a href="/2019/03/22/剑指Offer-二叉树的镜像/" id="post-prev" class="post-nav-link">
+        <div class="tips"><i class="icon icon-angle-left icon-lg icon-pr"></i> Prev</div>
+        <h4 class="title">剑指Offer - 二叉树的镜像</h4>
+      </a>
+    </div>
+  
+
+  
+    <div class="waves-block waves-effect next">
+      <a href="/2018/10/15/LeetCode-671-Second-Minimum-Node-In-a-Binary-Tree/" id="post-next" class="post-nav-link">
+        <div class="tips">Next <i class="icon icon-angle-right icon-lg icon-pl"></i></div>
+        <h4 class="title">LeetCode - 671. Second Minimum Node in a Binary Tree</h4>
+      </a>
+    </div>
+  
+</nav>
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+<div id="reward" class="page-modal reward-lay">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <h3 class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        谢谢大爷~
+        <i class="icon icon-quote-right"></i>
+    </h3>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/img/wechat.png" alt="打赏二维码">
+        </div>
+        
+        <label class="reward-toggle">
+            <input id="rewardToggle" type="checkbox" class="reward-toggle-check" data-wechat="/img/wechat.png" data-alipay="/img/alipay.png">
+            <div class="reward-toggle-ctrol">
+                <span class="reward-toggle-item wechat">微信</span>
+                <span class="reward-toggle-label"></span>
+                <span class="reward-toggle-item alipay">支付宝</span>
+            </div>
+        </label>
+        
+    </div>
+</div>
+
+
+
+</div>
+
+        <!-- <footer class="footer">
+    <div class="top">
+        
+
+        <p>
+            
+                <span><a href="/atom.xml" target="_blank" class="rss" title="rss"><i class="icon icon-lg icon-rss"></i></a></span>
+            
+            <span>This blog is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</span>
+        </p>
+    </div>
+    <div class="bottom">
+        <p><span>Songkc &copy; 2015 - 2019</span>
+            <span>
+                
+                Power by <a href="http://hexo.io/" target="_blank">Hexo</a> Theme <a href="https://github.com/yscoder/hexo-theme-indigo" target="_blank">indigo</a>
+            </span>
+        </p>
+    </div>
+</footer> -->
+
+    </main>
+    <div class="mask" id="mask"></div>
+<a href="javascript:;" id="gotop" class="waves-effect waves-circle waves-light"><span class="icon icon-lg icon-chevron-up"></span></a>
+
+
+
+<div class="global-share" id="globalShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/&title=《C++11 - Lambda 表达式》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/&title=《C++11 - Lambda 表达式》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《C++11 - Lambda 表达式》 — Songkc's Blog&url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2018/12/29/C++11-Lambda表达式/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+<div class="page-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGCAAAAACs8KCBAAACI0lEQVR42u3aUY6DMAxF0e5/08wCOqT32U0lnMsXUgP4ZKSM7eT1wtf1dr3/Skaux6yf+sIlQ4aMxzKu5ZUyajz+3VuqDBkyDmCQINavXj9Fvth6gwwZMmSEr/7lGBkyZMioJXmdexkyZMjoFLF3ryANMl6abq/FZciQ8UAG77r//n7L/oYMGTIexbjCa53Ardv9ZGQxKhkyZIxmpIldmkSmgdbikSFDxgkMPrSzKKfFbVoky5AhYyqjc8yLB1GblGALQYYMGaMZ6+DIhzmST0TxP4YMGTKGMtLFMW2l1QpXsnDLkCHjNAZp6++omNNW3e37ZciQMZoRN9lxEHyCatsJ/zwlQ4aMoQze3K8dkuBJIZlK1DWUIUPGOEZ/U7Ozn8iD7meAMmTIeC6Dl6bpJzvLaLp1KkOGjBMY/PBomt6R4xTphKIzIzJkyBjNSFO0WrOMH/xCUcmQIWM0Y3cdXHsP/xVtasqQIWMc41vHv9L7NPT47yBDhoyHM/qHITotubTcRb1DGTJkHMBIy850TLr9gKZVhgwZxzDWQ9M0rlVJp8/KkCFjKOMKLx4QDzTdEEU+GTJkDGJ0Frv0SBkPLm3SyZAh4wRG+rH1hwlsSwtPhgwZBzDWg/hiujvt+1DKypAhQwYOrtZ04+km2iOVIUPG8YxawlersNExMhkyZBzA4A01nhTWksjiRqkMGTJGM3jpyJtrfPOSL+JBmihDhow5jD+T79sZgyxUjwAAAABJRU5ErkJggg==" alt="微信分享二维码">
+</div>
+
+
+
+
+    <script src="//cdn.bootcss.com/node-waves/0.7.4/waves.min.js"></script>
+<script>
+var BLOG = { ROOT: '/', SHARE: true, REWARD: true };
+
+
+</script>
+
+<script src="/js/main.min.js?v=1.7.2"></script>
+
+
+<div class="search-panel" id="search-panel">
+    <ul class="search-result" id="search-result"></ul>
+</div>
+<template id="search-tpl">
+<li class="item">
+    <a href="{path}" class="waves-block waves-effect">
+        <div class="title ellipsis" title="{title}">{title}</div>
+        <div class="flex-row flex-middle">
+            <div class="tags ellipsis">
+                {tags}
+            </div>
+            <time class="flex-col time">{date}</time>
+        </div>
+    </a>
+</li>
+</template>
+
+<script src="/js/search.min.js?v=1.7.2" async></script>
+
+
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+
+
+
+
+<script>
+(function() {
+    var OriginTitile = document.title, titleTime;
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            document.title = 'o(一︿一+)o 死鬼去哪里了！';
+            clearTimeout(titleTime);
+        } else {
+            document.title = 'ヽ(✿ﾟ▽ﾟ)ノ 咦!回来了!';
+            titleTime = setTimeout(function() {
+                document.title = OriginTitile;
+            },2000);
+        }
+    });
+})();
+</script>
+
+
+
+</body>
+</html>

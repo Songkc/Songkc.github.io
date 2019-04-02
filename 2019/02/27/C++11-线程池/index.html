@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    
+
+    
+
+    
+
+
+
+    <meta charset="utf-8">
+    
+    
+    
+    
+    <title>C++11 - 线程池 | Songkc&#39;s Blog | Talk is cheap, show me the code.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="theme-color" content="#3F51B5">
+    
+    
+    <meta name="keywords" content="C++,C++11,并发编程">
+    <meta name="description" content="什么是线程池？传统多线程方案中采用的服务器模型是一旦接受到请求之后，即创建一个新的线程，由该线程执行任务。任务执行完毕后，线程退出，这就是是“即时创建，即时销毁”的策略。尽管与创建进程相比，创建线程的时间已经大大的缩短，但是如果提交给线程的任务是执行时间较短，而且执行次数极其频繁，那么服务器将处于不停的创建线程，销毁线程的状态。 线程池则是一种采用预创建技术的多线程处理形式，在程序启动之初就创建一">
+<meta name="keywords" content="C++,C++11,并发编程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++11 - 线程池">
+<meta property="og:url" content="https://songkc.github.io/2019/02/27/C++11-线程池/index.html">
+<meta property="og:site_name" content="Songkc&#39;s Blog">
+<meta property="og:description" content="什么是线程池？传统多线程方案中采用的服务器模型是一旦接受到请求之后，即创建一个新的线程，由该线程执行任务。任务执行完毕后，线程退出，这就是是“即时创建，即时销毁”的策略。尽管与创建进程相比，创建线程的时间已经大大的缩短，但是如果提交给线程的任务是执行时间较短，而且执行次数极其频繁，那么服务器将处于不停的创建线程，销毁线程的状态。 线程池则是一种采用预创建技术的多线程处理形式，在程序启动之初就创建一">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2019-04-02T17:57:10.706Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="C++11 - 线程池">
+<meta name="twitter:description" content="什么是线程池？传统多线程方案中采用的服务器模型是一旦接受到请求之后，即创建一个新的线程，由该线程执行任务。任务执行完毕后，线程退出，这就是是“即时创建，即时销毁”的策略。尽管与创建进程相比，创建线程的时间已经大大的缩短，但是如果提交给线程的任务是执行时间较短，而且执行次数极其频繁，那么服务器将处于不停的创建线程，销毁线程的状态。 线程池则是一种采用预创建技术的多线程处理形式，在程序启动之初就创建一">
+    
+        <link rel="alternate" type="application/atom+xml" title="Songkc&#39;s Blog" href="/atom.xml">
+    
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.7.2">
+    <script>window.lazyScripts=[]</script>
+
+    <!-- custom head -->
+    
+
+</head>
+
+<body>
+    <div id="loading" class="active"></div>
+
+    <aside id="menu">
+  <div class="inner flex-row-vertical">
+    <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menu-off">
+        <i class="icon icon-lg icon-close"></i>
+    </a>
+    <div class="brand-wrap" style="background-image:url(/img/brand.jpg)">
+      <div class="brand">
+        <a href="/" class="avatar waves-effect waves-circle waves-light">
+          <img src="/img/avatar.jpg">
+        </a>
+        <hgroup class="introduce">
+          <h5 class="nickname">Songkc</h5>
+          <a href="mailto:weijia_sysu@163.com" title="weijia_sysu@163.com" class="mail">weijia_sysu@163.com</a>
+        </hgroup>
+      </div>
+    </div>
+    <div class="scroll-wrap flex-col">
+      <ul class="nav">
+        
+            <li class="waves-block waves-effect">
+              <a href="/">
+                <i class="icon icon-lg icon-home"></i>
+                Home
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/archives/">
+                <i class="icon icon-lg icon-archives"></i>
+                Archives
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/tags/">
+                <i class="icon icon-lg icon-tags"></i>
+                Tags
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/categories/">
+                <i class="icon icon-lg icon-th-list"></i>
+                Categories
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="https://github.com/songkc" target="_blank">
+                <i class="icon icon-lg icon-github"></i>
+                Github
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/about/">
+                <i class="icon icon-lg icon-user"></i>
+                About
+              </a>
+            </li>
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+
+    <main id="main">
+        <header class="top-header" id="header">
+    <div class="flex-row">
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light on" id="menu-toggle">
+          <i class="icon icon-lg icon-navicon"></i>
+        </a>
+        <div class="flex-col header-title ellipsis">C++11 - 线程池</div>
+        
+        <div class="search-wrap" id="search-wrap">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+                <i class="icon icon-lg icon-chevron-left"></i>
+            </a>
+            <input type="text" id="key" class="search-input" autocomplete="off" placeholder="Search">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="search">
+                <i class="icon icon-lg icon-search"></i>
+            </a>
+        </div>
+        
+        
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menuShare">
+            <i class="icon icon-lg icon-share-alt"></i>
+        </a>
+        
+    </div>
+</header>
+<header class="content-header post-header">
+
+    <div class="container fade-scale">
+        <h1 class="title">C++11 - 线程池</h1>
+        <h3 class="subtitle">
+            
+                <time datetime="2019-02-26T17:47:39.000Z" itemprop="datePublished" class="page-time">
+  2019-02-27
+</time>
+
+
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/C/">C++</a></li></ul>
+
+            
+        
+    </h3></div>
+
+    
+
+
+</header>
+
+
+<div class="container body-wrap">
+    
+    <aside class="post-widget">
+        <nav class="post-toc-wrap post-toc-shrink" id="post-toc">
+            <h4>TOC</h4>
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#什么是线程池？"><span class="post-toc-number">1.</span> <span class="post-toc-text">什么是线程池？</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#线程池原理"><span class="post-toc-number">2.</span> <span class="post-toc-text">线程池原理</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#线程池适合场景"><span class="post-toc-number">3.</span> <span class="post-toc-text">线程池适合场景</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#线程池的组成部分"><span class="post-toc-number">4.</span> <span class="post-toc-text">线程池的组成部分</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#线程池实现原理"><span class="post-toc-number">5.</span> <span class="post-toc-text">线程池实现原理</span></a></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#线程池实现"><span class="post-toc-number">6.</span> <span class="post-toc-text">线程池实现</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#线程池代码"><span class="post-toc-number">6.1.</span> <span class="post-toc-text">线程池代码</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#测试代码"><span class="post-toc-number">6.2.</span> <span class="post-toc-text">测试代码</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#参考"><span class="post-toc-number">7.</span> <span class="post-toc-text">参考</span></a></li></ol>
+        </nav>
+    </aside>
+
+
+<article id="post-C++11-线程池" class="post-article article-type-post fade" itemprop="blogPost">
+
+    <div class="post-card">
+        <h1 class="post-card-title">C++11 - 线程池</h1>
+        <div class="post-meta">
+            <time class="post-time" title="2019-02-27 01:47:39" datetime="2019-02-26T17:47:39.000Z" itemprop="datePublished">2019-02-27</time>
+
+            
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/C/">C++</a></li></ul>
+
+
+
+            
+
+        </div>
+        <div class="post-content" id="post-content" itemprop="postContent">
+            <h2 id="什么是线程池？"><a href="#什么是线程池？" class="headerlink" title="什么是线程池？"></a>什么是线程池？</h2><p>传统多线程方案中采用的服务器模型是一旦接受到请求之后，即创建一个新的线程，由该线程执行任务。任务执行完毕后，线程退出，这就是是“<strong>即时创建，即时销毁</strong>”的策略。尽管与创建进程相比，创建线程的时间已经大大的缩短，但是如果提交给线程的任务是执行时间较短，而且执行次数极其频繁，那么服务器将处于不停的创建线程，销毁线程的状态。</p>
+<p>线程池则是一种采用<strong>预创建技术</strong>的多线程处理形式，在程序启动之初就创建一定数量线程，运行过程中将任务添加到队列，然后再将任务分配给已创建好的线程中自动启动这些任务。因为程序边运行边创建线程是比较耗时的，所以我们通过池化的思想，减少创建线程和销毁线程对程序资源的消耗。线程池线程都是后台线程。每个线程都使用默认的堆栈大小，以默认的优先级运行，并处于多线程单元中。</p>
+<h2 id="线程池原理"><a href="#线程池原理" class="headerlink" title="线程池原理"></a>线程池原理</h2><p>线程池采用预创建的技术，在程序启动之后，将立即创建一定数量的线程（N1），放入空闲队列中。这些线程都是处于阻塞状态，不消耗 CPU，但占用较小的内存空间。当任务到来后，缓冲池选择一个空闲线程，把任务传入此线程中执行。当 N1 个线程都在处理任务后，缓冲池自动创建一定数量的新线程，用于处理更多的任务。在任务执行完毕后线程也不退出，而是继续保持在池中等待下一次的任务。当系统比较空闲时，大部分线程都一直处于暂停状态，线程池自动销毁一部分线程，回收系统资源。</p>
+<p>使用线程完成一项任务所需时间为：T1 创建线程时间，T2 在线程中执行任务的时间，T3 销毁线程时间。如果：T1 + T3 远大于 T2，则可以采用线程池，以提高服务器性能。</p>
+<p>线程池技术正是关注如何缩短或调整 T1，T3 时间的技术，从而提高服务器程序性能的。它把 T1，T3 分别安排在程序的启动和结束的时间段或者一些空闲的时间段，这样在程序处理多个任务时，就不会有 T1，T3 的开销了。同时，线程池不仅调整 T1 和 T3 产生的时间段，而且它还显著减少了创建线程的数目。</p>
+<h2 id="线程池适合场景"><a href="#线程池适合场景" class="headerlink" title="线程池适合场景"></a>线程池适合场景</h2><p>事实上，线程池并不是万能的。它有其特定的使用场合。线程池致力于减少线程本身的开销对应用所产生的影响，这是有前提的，前提就是线程本身开销与线程执行任务相比不可忽略。如果线程本身的开销相对于线程任务执行开销而言是可以忽略不计的，那么此时线程池所带来的好处是不明显的，比如对于FTP服务器以及Telnet服务器，通常传送文件的时间较长，开销较大，那么此时，我们采用线程池未必是理想的方法，我们可以选择“即时创建，即时销毁”的策略。</p>
+<p>总之线程池通常适合下面的几个场合：</p>
+<ol>
+<li><strong>单位时间内处理任务频繁而且任务处理时间短。</strong></li>
+<li><strong>对实时性要求较高。如果接受到任务后在创建线程，可能满足不了实时要求，因此必须采用线程池进行预创建。</strong></li>
+</ol>
+<h2 id="线程池的组成部分"><a href="#线程池的组成部分" class="headerlink" title="线程池的组成部分"></a>线程池的组成部分</h2><ul>
+<li>线程池管理器（ThreadPoolManager）：用于创建并管理线程</li>
+<li>工作线程（WorkThread）：线程池中的线程</li>
+<li>任务接口（Task）：每个任务必须实现的接口，以供工作线程调度任务的执行</li>
+<li>任务队列（TaskQueue）：用于存放没有处理的任务</li>
+</ul>
+<h2 id="线程池实现原理"><a href="#线程池实现原理" class="headerlink" title="线程池实现原理"></a>线程池实现原理</h2><p>线程池管理一个任务队列，一个线程队列，然后每次取一个任务分配给一个线程去做，循环往复。而线程池一般要复用线程，所以如果是取一个 task 分配给某一个 thread，执行完之后再重新分配，在语言层面上基本都是不支持的：一般语言的 thread 都是执行一个固定的 task 函数，执行完毕线程也就结束了，因此要如何实现 task 和 thread 的分配呢？</p>
+<p>思路就是：<strong>让每一个 thread 都去执行调度函数：循环获取一个 task，然后执行之。保证了 thread 函数的唯一性，而且复用线程执行 task。</strong></p>
+<h2 id="线程池实现"><a href="#线程池实现" class="headerlink" title="线程池实现"></a>线程池实现</h2><h3 id="线程池代码"><a href="#线程池代码" class="headerlink" title="线程池代码"></a>线程池代码</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> THREADPOOL_H_</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> THREADPOOL_H_</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;queue&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mutex&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;condition_variable&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;functional&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ThreadPool</span> &#123;</span></span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="comment">// constructor</span></span><br><span class="line">        ThreadPool(<span class="keyword">size_t</span> threadnum = <span class="number">1</span>);</span><br><span class="line">        <span class="comment">// deconstructor</span></span><br><span class="line">        ~ThreadPool();</span><br><span class="line">        <span class="comment">// add task</span></span><br><span class="line">        <span class="function"><span class="keyword">bool</span> <span class="title">EnQueue</span><span class="params">(<span class="built_in">std</span>::function&lt;<span class="keyword">void</span>()&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="comment">// the work threads</span></span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="built_in">std</span>::thread&gt; workers_;</span><br><span class="line">        <span class="comment">// the task queue</span></span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">queue</span>&lt;<span class="built_in">std</span>::function&lt;<span class="keyword">void</span>()&gt;&gt; tasks_;</span><br><span class="line">        <span class="comment">// the task queue lock</span></span><br><span class="line">        <span class="built_in">std</span>::mutex mutex_;</span><br><span class="line">        <span class="comment">// condition variable</span></span><br><span class="line">        <span class="built_in">std</span>::condition_variable condition_;</span><br><span class="line">        <span class="comment">// constrol thread pool</span></span><br><span class="line">        <span class="keyword">bool</span> stop_;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// the constructor just launches some amount of workers</span></span><br><span class="line"><span class="keyword">inline</span> ThreadPool::ThreadPool(<span class="keyword">size_t</span> threadnum) : stop_(<span class="literal">false</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; threadnum; ++i) &#123;</span><br><span class="line">        workers_.emplace_back( [<span class="keyword">this</span>]&#123;  <span class="comment">// 为每个线程构造一个调度函数</span></span><br><span class="line">            <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">                <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>()&gt; task;</span><br><span class="line">                &#123;   <span class="comment">// 此处花括号使得在执行 task 前即释放互斥锁</span></span><br><span class="line">                    <span class="built_in">std</span>::unique_lock&lt;<span class="built_in">std</span>::mutex&gt; lock(<span class="keyword">this</span>-&gt;mutex_);</span><br><span class="line">                    <span class="comment">// stop_ 为 false 且 task queue 为空时阻塞线程，其他情况都不阻塞</span></span><br><span class="line">                    <span class="keyword">this</span>-&gt;condition_.wait(lock, [<span class="keyword">this</span>]&#123;</span><br><span class="line">                        <span class="keyword">return</span> (<span class="keyword">this</span>-&gt;stop_ || !<span class="keyword">this</span>-&gt;tasks_.empty()); &#125;);</span><br><span class="line">                    <span class="comment">// 线程结束，用于销毁线程</span></span><br><span class="line">                    <span class="keyword">if</span> (<span class="keyword">this</span>-&gt;stop_ &amp;&amp; <span class="keyword">this</span>-&gt;tasks_.empty())</span><br><span class="line">                        <span class="keyword">return</span>;</span><br><span class="line">                    <span class="keyword">if</span> (<span class="keyword">this</span>-&gt;tasks_.empty() == <span class="literal">false</span>) &#123;</span><br><span class="line">                        task = <span class="built_in">std</span>::move(<span class="keyword">this</span>-&gt;tasks_.front());</span><br><span class="line">                        <span class="keyword">this</span>-&gt;tasks_.pop();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                task();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// the destructor joins all threads</span></span><br><span class="line"><span class="keyword">inline</span> ThreadPool::~ThreadPool() &#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 对于所有线程共享的变量操作前都需要加锁</span></span><br><span class="line">        <span class="built_in">std</span>::unique_lock&lt;<span class="built_in">std</span>::mutex&gt; lock(mutex_);</span><br><span class="line">        stop_ = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 唤醒所有阻塞的线程</span></span><br><span class="line">    condition_.notify_all();</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">std</span>::thread &amp;worker : workers_) &#123;</span><br><span class="line">        <span class="comment">// 等待所有线程都执行完</span></span><br><span class="line">        worker.join();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// add new task to the task queue</span></span><br><span class="line"><span class="keyword">bool</span> ThreadPool::EnQueue(<span class="built_in">std</span>::function&lt;<span class="keyword">void</span>()&gt; task) &#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 对于 task queue 的操作都需要加锁，因为 task queue 是所有线程共有的</span></span><br><span class="line">        <span class="built_in">std</span>::unique_lock&lt;<span class="built_in">std</span>::mutex&gt; lock(mutex_);</span><br><span class="line">        tasks_.emplace(task);</span><br><span class="line">    &#125;</span><br><span class="line">    condition_.notify_one();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">// _THREADPOOL_H_</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"threadpool.h"</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">cout</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span> &#123;</span></span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">void</span> <span class="title">process_to_test</span><span class="params">(<span class="keyword">const</span> <span class="keyword">int</span> i, <span class="keyword">const</span> <span class="keyword">int</span> j)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> x = <span class="number">0</span>; x &lt; i; ++x) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> y = <span class="number">0</span>; y &lt; j; ++y) &#123;</span><br><span class="line">                    ++count;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">"Thread num: "</span> &lt;&lt; -(i - <span class="number">8</span>) &lt;&lt; <span class="string">" "</span> &lt;&lt; count &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Test test;</span><br><span class="line">    <span class="function">ThreadPool <span class="title">pool</span><span class="params">(<span class="number">8</span>)</span></span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">unsigned</span> i = <span class="number">0</span>; i &lt; <span class="number">8</span>; ++i) &#123;</span><br><span class="line">        pool.EnQueue(<span class="built_in">std</span>::bind(&amp;Test::process_to_test, &amp;test, <span class="number">8</span> - i, <span class="number">1000000</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>Progschj/ThreadPool：<a href="https://github.com/progschj/ThreadPool" target="_blank" rel="noopener">https://github.com/progschj/ThreadPool</a></li>
+<li>C++11线程池实现：<a href="https://blog.csdn.net/zdarks/article/details/46994607" target="_blank" rel="noopener">https://blog.csdn.net/zdarks/article/details/46994607</a></li>
+<li>线程池的原理及实现：<a href="https://blog.csdn.net/Hsuxu/article/details/8985931" target="_blank" rel="noopener">https://blog.csdn.net/Hsuxu/article/details/8985931</a></li>
+<li>基于c++11的100行实现简单线程池：<a href="https://blog.csdn.net/gcola007/article/details/78750220" target="_blank" rel="noopener">https://blog.csdn.net/gcola007/article/details/78750220</a></li>
+<li>C++11并发学习之六：线程池的实现：<a href="https://blog.csdn.net/caoshangpa/article/details/80374651" target="_blank" rel="noopener">https://blog.csdn.net/caoshangpa/article/details/80374651</a></li>
+<li>使用C++11实现线程池的两种方法：<a href="https://blog.csdn.net/liushengxi_root/article/details/83932654" target="_blank" rel="noopener">https://blog.csdn.net/liushengxi_root/article/details/83932654</a></li>
+</ul>
+
+        </div>
+
+        <blockquote class="post-copyright">
+    
+    <div class="content">
+        
+
+        
+        如有疑问请联系作者，联系方式：weijia_sysu@163.com
+        
+    </div>
+    
+    <footer>
+        <a href="https://songkc.github.io">
+            <img src="/img/avatar.jpg" alt="Songkc">
+            Songkc
+        </a>
+    </footer>
+</blockquote>
+
+        
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;" class="page-reward-btn waves-effect waves-circle waves-light">赏</a>
+</div>
+
+
+
+        <div class="post-footer">
+            
+	<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C/">C++</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/C-11/">C++11</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/并发编程/">并发编程</a></li></ul>
+
+
+            
+<div class="page-share-wrap">
+    
+
+<div class="page-share" id="pageShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/02/27/C++11-线程池/&title=《C++11 - 线程池》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/02/27/C++11-线程池/&title=《C++11 - 线程池》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/02/27/C++11-线程池/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《C++11 - 线程池》 — Songkc's Blog&url=https://songkc.github.io/2019/02/27/C++11-线程池/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/02/27/C++11-线程池/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+
+    <a href="javascript:;" id="shareFab" class="page-share-fab waves-effect waves-circle">
+        <i class="icon icon-share-alt icon-lg"></i>
+    </a>
+</div>
+
+
+
+        </div>
+    </div>
+
+    
+<nav class="post-nav flex-row flex-justify-between">
+  
+    <div class="waves-block waves-effect prev">
+      <a href="/2019/03/22/剑指Offer-二叉树的镜像/" id="post-prev" class="post-nav-link">
+        <div class="tips"><i class="icon icon-angle-left icon-lg icon-pr"></i> Prev</div>
+        <h4 class="title">剑指Offer - 二叉树的镜像</h4>
+      </a>
+    </div>
+  
+
+  
+    <div class="waves-block waves-effect next">
+      <a href="/2018/12/29/C++11-Lambda表达式/" id="post-next" class="post-nav-link">
+        <div class="tips">Next <i class="icon icon-angle-right icon-lg icon-pl"></i></div>
+        <h4 class="title">C++11 - Lambda 表达式</h4>
+      </a>
+    </div>
+  
+</nav>
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+<div id="reward" class="page-modal reward-lay">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <h3 class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        谢谢大爷~
+        <i class="icon icon-quote-right"></i>
+    </h3>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/img/wechat.png" alt="打赏二维码">
+        </div>
+        
+        <label class="reward-toggle">
+            <input id="rewardToggle" type="checkbox" class="reward-toggle-check" data-wechat="/img/wechat.png" data-alipay="/img/alipay.png">
+            <div class="reward-toggle-ctrol">
+                <span class="reward-toggle-item wechat">微信</span>
+                <span class="reward-toggle-label"></span>
+                <span class="reward-toggle-item alipay">支付宝</span>
+            </div>
+        </label>
+        
+    </div>
+</div>
+
+
+
+</div>
+
+        <!-- <footer class="footer">
+    <div class="top">
+        
+
+        <p>
+            
+                <span><a href="/atom.xml" target="_blank" class="rss" title="rss"><i class="icon icon-lg icon-rss"></i></a></span>
+            
+            <span>This blog is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</span>
+        </p>
+    </div>
+    <div class="bottom">
+        <p><span>Songkc &copy; 2015 - 2019</span>
+            <span>
+                
+                Power by <a href="http://hexo.io/" target="_blank">Hexo</a> Theme <a href="https://github.com/yscoder/hexo-theme-indigo" target="_blank">indigo</a>
+            </span>
+        </p>
+    </div>
+</footer> -->
+
+    </main>
+    <div class="mask" id="mask"></div>
+<a href="javascript:;" id="gotop" class="waves-effect waves-circle waves-light"><span class="icon icon-lg icon-chevron-up"></span></a>
+
+
+
+<div class="global-share" id="globalShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/02/27/C++11-线程池/&title=《C++11 - 线程池》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/02/27/C++11-线程池/&title=《C++11 - 线程池》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/02/27/C++11-线程池/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《C++11 - 线程池》 — Songkc's Blog&url=https://songkc.github.io/2019/02/27/C++11-线程池/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/02/27/C++11-线程池/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+<div class="page-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGCAAAAACs8KCBAAACJklEQVR42u3aQZKDMAwF0dz/0swBUjj9JTNVyM0qRSD4sVAkWZ8PPq6v4/tbcuX6mvVdGw4ZMmS8lnEtj13vif/++vztSmTIkHEA4+7B65BKrlyT+HN/rFmGDBkycDpIksV1iilDhgwZuwJu58rar8mQIUMGKTJ5A46kg7Xm3YZaXIYMGS9k8GbZ/39+ZH9DhgwZr2Jc4cGL2M52QrwqGTJkjGbwAMe3NnlJTF4QTzRlyJBxAqNTvvLhCc5LYTJkyDiBUUvd+Hk+wJFeL0OGjNmMdPSBb0x2QvmGfwwZMmQMYqSP3HsmbfAhmAwZMkYzSMgjC0qL1WJzTYYMGYcx0lY+X1zahks3SlEtLkOGjJcz0iYXD7U8NJPtz2K7TYYMGSMY6cBEMaKDa3ij7TZNlCFDxmgGH/xKNwBIAE1Hyn68aBkyZIxj8OZaGnzTcYpOwSxDhgwZ6UBGpwCuFbQyZMg4gdFZBCksO09BKawMGTJGM9LGWaehlqaScS0uQ4aMgxmdcjRdSm1zVIYMGacxUBIW4mvFMAnlMmTIOJPBByB4qOWvht+L/jdkyJAxgnGFR2dEo39vMCciQ4aMQYxOsOs04Gplai3Ey5AhYwaDBFn+czxw14pnGTJknMxINxprD0s3L4vDFjJkyJCBE7vaJihPRj+1B8uQIeMYRn+Je0c9ZMiQcQKDFJz9b3nC92AtLkOGjBcyeOnIM7HngjhKE2XIkDGH8QdmQBkGnlthRQAAAABJRU5ErkJggg==" alt="微信分享二维码">
+</div>
+
+
+
+
+    <script src="//cdn.bootcss.com/node-waves/0.7.4/waves.min.js"></script>
+<script>
+var BLOG = { ROOT: '/', SHARE: true, REWARD: true };
+
+
+</script>
+
+<script src="/js/main.min.js?v=1.7.2"></script>
+
+
+<div class="search-panel" id="search-panel">
+    <ul class="search-result" id="search-result"></ul>
+</div>
+<template id="search-tpl">
+<li class="item">
+    <a href="{path}" class="waves-block waves-effect">
+        <div class="title ellipsis" title="{title}">{title}</div>
+        <div class="flex-row flex-middle">
+            <div class="tags ellipsis">
+                {tags}
+            </div>
+            <time class="flex-col time">{date}</time>
+        </div>
+    </a>
+</li>
+</template>
+
+<script src="/js/search.min.js?v=1.7.2" async></script>
+
+
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+
+
+
+
+<script>
+(function() {
+    var OriginTitile = document.title, titleTime;
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            document.title = 'o(一︿一+)o 死鬼去哪里了！';
+            clearTimeout(titleTime);
+        } else {
+            document.title = 'ヽ(✿ﾟ▽ﾟ)ノ 咦!回来了!';
+            titleTime = setTimeout(function() {
+                document.title = OriginTitile;
+            },2000);
+        }
+    });
+})();
+</script>
+
+
+
+</body>
+</html>

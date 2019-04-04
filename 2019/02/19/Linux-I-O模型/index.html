@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    
+
+    
+
+    
+
+
+
+    <meta charset="utf-8">
+    
+    
+    
+    
+    <title>Linux - I/O 模型 | Songkc&#39;s Blog | Talk is cheap, show me the code.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="theme-color" content="#3F51B5">
+    
+    
+    <meta name="keywords" content="Linux,I/O">
+    <meta name="description" content="基础知识用户空间和内核空间以下皆是基于 Linux，现代操作系统都是采用虚拟寻址，处理器先产生一个虚拟地址，通过地址翻译成物理地址（内存的地址），再通过总线的传递，最后处理器拿到物理地址存储的数据。 操作系统的核心是内核，独立于普通的应用程序，可以访问受保护的内存空间，也有访问底层硬件设备的所有权限。为了保证用户进程不能直接操作内核（kernel），保证内核的安全，操心系统将虚拟空间划分为两部分，">
+<meta name="keywords" content="Linux,I&#x2F;O">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux - I&#x2F;O 模型">
+<meta property="og:url" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/index.html">
+<meta property="og:site_name" content="Songkc&#39;s Blog">
+<meta property="og:description" content="基础知识用户空间和内核空间以下皆是基于 Linux，现代操作系统都是采用虚拟寻址，处理器先产生一个虚拟地址，通过地址翻译成物理地址（内存的地址），再通过总线的传递，最后处理器拿到物理地址存储的数据。 操作系统的核心是内核，独立于普通的应用程序，可以访问受保护的内存空间，也有访问底层硬件设备的所有权限。为了保证用户进程不能直接操作内核（kernel），保证内核的安全，操心系统将虚拟空间划分为两部分，">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/cache.png">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/direct.png">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/blocking.png">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/non-blocking.png">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/multiplexing.png">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/signal.png">
+<meta property="og:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/asynchronous.png">
+<meta property="og:updated_time" content="2019-04-04T18:47:15.133Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux - I&#x2F;O 模型">
+<meta name="twitter:description" content="基础知识用户空间和内核空间以下皆是基于 Linux，现代操作系统都是采用虚拟寻址，处理器先产生一个虚拟地址，通过地址翻译成物理地址（内存的地址），再通过总线的传递，最后处理器拿到物理地址存储的数据。 操作系统的核心是内核，独立于普通的应用程序，可以访问受保护的内存空间，也有访问底层硬件设备的所有权限。为了保证用户进程不能直接操作内核（kernel），保证内核的安全，操心系统将虚拟空间划分为两部分，">
+<meta name="twitter:image" content="https://songkc.github.io/2019/02/19/Linux-I-O模型/cache.png">
+    
+        <link rel="alternate" type="application/atom+xml" title="Songkc&#39;s Blog" href="/atom.xml">
+    
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.7.2">
+    <script>window.lazyScripts=[]</script>
+
+    <!-- custom head -->
+    
+
+</head>
+
+<body>
+    <div id="loading" class="active"></div>
+
+    <aside id="menu">
+  <div class="inner flex-row-vertical">
+    <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menu-off">
+        <i class="icon icon-lg icon-close"></i>
+    </a>
+    <div class="brand-wrap" style="background-image:url(/img/brand.jpg)">
+      <div class="brand">
+        <a href="/" class="avatar waves-effect waves-circle waves-light">
+          <img src="/img/avatar.jpg">
+        </a>
+        <hgroup class="introduce">
+          <h5 class="nickname">Songkc</h5>
+          <a href="mailto:weijia_sysu@163.com" title="weijia_sysu@163.com" class="mail">weijia_sysu@163.com</a>
+        </hgroup>
+      </div>
+    </div>
+    <div class="scroll-wrap flex-col">
+      <ul class="nav">
+        
+            <li class="waves-block waves-effect">
+              <a href="/">
+                <i class="icon icon-lg icon-home"></i>
+                Home
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/archives/">
+                <i class="icon icon-lg icon-archives"></i>
+                Archives
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/tags/">
+                <i class="icon icon-lg icon-tags"></i>
+                Tags
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/categories/">
+                <i class="icon icon-lg icon-th-list"></i>
+                Categories
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="https://github.com/songkc" target="_blank">
+                <i class="icon icon-lg icon-github"></i>
+                Github
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/about/">
+                <i class="icon icon-lg icon-user"></i>
+                About
+              </a>
+            </li>
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+
+    <main id="main">
+        <header class="top-header" id="header">
+    <div class="flex-row">
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light on" id="menu-toggle">
+          <i class="icon icon-lg icon-navicon"></i>
+        </a>
+        <div class="flex-col header-title ellipsis">Linux - I/O 模型</div>
+        
+        <div class="search-wrap" id="search-wrap">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+                <i class="icon icon-lg icon-chevron-left"></i>
+            </a>
+            <input type="text" id="key" class="search-input" autocomplete="off" placeholder="Search">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="search">
+                <i class="icon icon-lg icon-search"></i>
+            </a>
+        </div>
+        
+        
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menuShare">
+            <i class="icon icon-lg icon-share-alt"></i>
+        </a>
+        
+    </div>
+</header>
+<header class="content-header post-header">
+
+    <div class="container fade-scale">
+        <h1 class="title">Linux - I/O 模型</h1>
+        <h3 class="subtitle">
+            
+                <time datetime="2019-02-19T11:33:37.000Z" itemprop="datePublished" class="page-time">
+  2019-02-19
+</time>
+
+
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/Linux/">Linux</a></li></ul>
+
+            
+        
+    </h3></div>
+
+    
+
+
+</header>
+
+
+<div class="container body-wrap">
+    
+    <aside class="post-widget">
+        <nav class="post-toc-wrap post-toc-shrink" id="post-toc">
+            <h4>TOC</h4>
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#基础知识"><span class="post-toc-number">1.</span> <span class="post-toc-text">基础知识</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#用户空间和内核空间"><span class="post-toc-number">1.1.</span> <span class="post-toc-text">用户空间和内核空间</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#进程上下文切换"><span class="post-toc-number">1.2.</span> <span class="post-toc-text">进程上下文切换</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#进程的阻塞"><span class="post-toc-number">1.3.</span> <span class="post-toc-text">进程的阻塞</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#文件描述符"><span class="post-toc-number">1.4.</span> <span class="post-toc-text">文件描述符</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#直接-I-O-和-缓存-I-O"><span class="post-toc-number">1.5.</span> <span class="post-toc-text">直接 I/O 和 缓存 I/O</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#I-O-模式"><span class="post-toc-number">2.</span> <span class="post-toc-text">I/O 模式</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#阻塞-I-O（Blocking-I-O）"><span class="post-toc-number">2.1.</span> <span class="post-toc-text">阻塞 I/O（Blocking I/O）</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#非阻塞（Non-blocking-I-O）"><span class="post-toc-number">2.2.</span> <span class="post-toc-text">非阻塞（Non-blocking I/O）</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#I-O-多路复用（I-O-multiplexing）"><span class="post-toc-number">2.3.</span> <span class="post-toc-text">I/O 多路复用（I/O multiplexing）</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#信号驱动-I-O（Signal-driven-I-O）"><span class="post-toc-number">2.4.</span> <span class="post-toc-text">信号驱动 I/O（Signal driven I/O）</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#异步-I-O（Asynchronous-I-O）"><span class="post-toc-number">2.5.</span> <span class="post-toc-text">异步 I/O（Asynchronous I/O）</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#总结"><span class="post-toc-number">3.</span> <span class="post-toc-text">总结</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#Blocking-和-Non-blocking-的区别"><span class="post-toc-number">3.1.</span> <span class="post-toc-text">Blocking 和 Non-blocking 的区别</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#Synchronous-和-Asynchronous-的区别"><span class="post-toc-number">3.2.</span> <span class="post-toc-text">Synchronous 和 Asynchronous 的区别</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#Non-blocking-I-O-和-Asynchronous-I-O的区别"><span class="post-toc-number">3.3.</span> <span class="post-toc-text">Non-blocking I/O 和 Asynchronous I/O的区别</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#参考"><span class="post-toc-number">4.</span> <span class="post-toc-text">参考</span></a></li></ol>
+        </nav>
+    </aside>
+
+
+<article id="post-Linux-I-O模型" class="post-article article-type-post fade" itemprop="blogPost">
+
+    <div class="post-card">
+        <h1 class="post-card-title">Linux - I/O 模型</h1>
+        <div class="post-meta">
+            <time class="post-time" title="2019-02-19 19:33:37" datetime="2019-02-19T11:33:37.000Z" itemprop="datePublished">2019-02-19</time>
+
+            
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/Linux/">Linux</a></li></ul>
+
+
+
+            
+
+        </div>
+        <div class="post-content" id="post-content" itemprop="postContent">
+            <h2 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h2><h3 id="用户空间和内核空间"><a href="#用户空间和内核空间" class="headerlink" title="用户空间和内核空间"></a>用户空间和内核空间</h3><p>以下皆是基于 Linux，现代操作系统都是采用虚拟寻址，<strong>处理器先产生一个虚拟地址</strong>，通过<strong>地址翻译成物理地址（内存的地址）</strong>，再通过总线的传递，最后处理器拿到物理地址存储的数据。</p>
+<p>操作系统的核心是内核，独立于普通的应用程序，可以访问受保护的内存空间，也有访问底层硬件设备的所有权限。为了保证用户进程不能直接操作内核（kernel），保证内核的安全，操心系统将虚拟空间划分为两部分，一部分为内核空间，一部分为用户空间。</p>
+<p>对 32 位操作系统而言，它的寻址空间（虚拟存储空间）为 4G（2 的 32 次方）。针对 Linux 操作系统而言，将最高的 1G 地址（从虚拟地址 0xC0000000 到 0xFFFFFFFF），供内核使用，称为内核空间，而将较低的 3G 地址（从虚拟地址 0x00000000 到 0xBFFFFFFF），供各个进程使用，称为用户空间。</p>
+<h3 id="进程上下文切换"><a href="#进程上下文切换" class="headerlink" title="进程上下文切换"></a>进程上下文切换</h3><p>为了控制进程的执行，内核必须有能力挂起正在CPU上运行的进程，并恢复以前挂起的某个进程的执行。这种行为被称为进程的上下文切换（也叫调度）。因此可以说，任何进程都是在操作系统内核的支持下运行的，是与内核紧密相关的。</p>
+<p>从一个进程的运行转到另一个进程上运行，这个过程中经过下面<strong>这些变化</strong>：</p>
+<p>（1）<strong>保存当前进程 A 的上下文</strong>。上下文就是内核再次唤醒当前进程时所需要的状态，由一些<strong>对象（程序计数器、状态寄存器、用户栈等各种内核数据结构）的值</strong>组成。</p>
+<p>（2）<strong>切换页全局目录以安装一个新的地址空间。</strong></p>
+<p>（3）<strong>恢复进程 B 的上下文</strong>。</p>
+<p>进程上下文切换是一个比较消耗资源的过程。</p>
+<h3 id="进程的阻塞"><a href="#进程的阻塞" class="headerlink" title="进程的阻塞"></a>进程的阻塞</h3><p>正在运行状态的进程，由于<strong>期待的某些事件未发生</strong>，如请求系统资源失败、等待某种操作的完成、新数据尚未到达或无新工作做等，则由系统自动执行<strong>阻塞原语（Block）</strong>，使自己由运行状态变为阻塞状态。可见，进程的阻塞是进程自身的一种主动行为，也因此只有处于运行状态的进程（已获得 CPU），才可能将其转为阻塞状态。<strong>当进程转入阻塞状态时，是不占用 CPU 资源的</strong>。</p>
+<h3 id="文件描述符"><a href="#文件描述符" class="headerlink" title="文件描述符"></a>文件描述符</h3><p><strong>在 Linux 系统中一切皆可以看成是文件，文件又可分为：普通文件、目录文件、链接文件和设备文件。</strong>文件描述符（file descriptor）是内核为了高效管理已被打开的文件所创建的索引，其是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行 I/ O操作的系统调用都通过文件描述符。</p>
+<p>文件描述符在形式上是一个<strong>非负整数</strong>。实际上，它是一个索引值，指向内核为每一个进程所维护的该进程打开文件的记录表。当程序打开一个现有文件或者创建一个新文件时，内核向进程返回一个文件描述符。在程序设计中，一些涉及底层的程序编写往往会围绕着文件描述符展开。但是文件描述符这一概念往往只适用于 UNIX、Linux 这样的操作系统。</p>
+<h3 id="直接-I-O-和-缓存-I-O"><a href="#直接-I-O-和-缓存-I-O" class="headerlink" title="直接 I/O 和 缓存 I/O"></a>直接 I/O 和 缓存 I/O</h3><p>缓存 I/O 又被称作标准 I/O，大多数文件系统的默认 I/O 操作都是缓存 I/O。在 Linux 的缓存 I/O 机制中，以 <strong>write</strong> 操作为例，数据会先被拷贝到进程缓冲区，再拷贝到操作系统内核的缓冲区中，然后才会写到相应存储设备中。</p>
+<p><strong>缓存 I/O 的 write 操作：</strong></p>
+<figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/cache.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p><strong>直接 I/O 的 write 操作：</strong></p>
+<figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/direct.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p><strong>write 操作过程中会有很多次拷贝，直到数据全部拷贝到磁盘。</strong></p>
+<h2 id="I-O-模式"><a href="#I-O-模式" class="headerlink" title="I/O 模式"></a>I/O 模式</h2><p>对于<strong>一次 I/O 访问（这里以 read 操作举例）</strong>，数据会先被拷贝到操作系统内核的缓冲区中，然后才会从操作系统内核的缓冲区拷贝到应用程序的缓冲区，最后交给进程。</p>
+<p>所以说，<strong>当一个 read 操作发生时，它会经历两个阶段：</strong></p>
+<p>（1）等待数据准备（Waiting for the data to be ready）</p>
+<p>（2）将数据从内核拷贝到进程中（Copying the data from the kernel to the process）</p>
+<p>正式因为这两个阶段，<strong>Linux 系统产生了下面五种网络模式的方案：</strong></p>
+<p>（1）阻塞 I/O（Blocking I/O）</p>
+<p>（2）非阻塞 I/O（Non-blocking I/O）</p>
+<p>（3）I/O 多路复用（I/O multiplexing）</p>
+<p>（4）信号驱动 I/O（Signal driven I/O）</p>
+<p>（5）异步 I/O（Asynchronous I/O）</p>
+<h3 id="阻塞-I-O（Blocking-I-O）"><a href="#阻塞-I-O（Blocking-I-O）" class="headerlink" title="阻塞 I/O（Blocking I/O）"></a>阻塞 I/O（Blocking I/O）</h3><figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/blocking.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p>以 read 操作为例：</p>
+<p>（1）进程发起read，进行recvfrom系统调用；</p>
+<p>（2）内核开始第一阶段，准备数据（从磁盘拷贝到内核缓冲区），进程请求的数据并不是一下就能准备好；准备数据是要消耗时间的；</p>
+<p>（3）与此同时，进程阻塞（进程是自己选择阻塞与否），等待数据中；</p>
+<p>（4）直到数据从内核拷贝到了用户空间，内核返回结果，进程解除阻塞。</p>
+<p>也就是说，<strong>内核准备数据</strong>和<strong>数据从内核拷贝到进程内</strong>这两个过程都是阻塞的。</p>
+<h3 id="非阻塞（Non-blocking-I-O）"><a href="#非阻塞（Non-blocking-I-O）" class="headerlink" title="非阻塞（Non-blocking I/O）"></a>非阻塞（Non-blocking I/O）</h3><figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/non-blocking.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p>（1）当用户进程发出 read 操作时，如果 kernel 中的数据还没有准备好；</p>
+<p>（2）那么它并不会阻塞用户进程，而是立刻返回一个 <strong>error</strong>，从用户进程角度讲 ，它发起一个 read 操作后，并不需要等待，而是马上就得到了一个结果；</p>
+<p>（3）用户进程判断结果是一个 <strong>error</strong> 时，它就知道数据还没有准备好，于是它可以再次发送 read 操作。一旦 kernel 中的数据准备好了，并且又再次收到了用户进程的 system call；</p>
+<p>（4）那么它马上就将数据拷贝到了用户内存，然后返回。</p>
+<p>所以，Non-blocking I/O 的特点是<strong>用户进程在内核准备数据的阶段需要不断的主动询问数据是否准备好。但是，轮寻对于 CPU 来说是较大的浪费，一般只有在特定的场景下才使用</strong>。</p>
+<h3 id="I-O-多路复用（I-O-multiplexing）"><a href="#I-O-多路复用（I-O-multiplexing）" class="headerlink" title="I/O 多路复用（I/O multiplexing）"></a>I/O 多路复用（I/O multiplexing）</h3><figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/multiplexing.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p>I/O 多路复用实际上就是用 <strong>select, poll, epoll</strong> 监听多个 I/O 对象，当 I/O 对象有变化（有数据）的时候就通知用户进程。好处就是单个进程可以处理多个 Socket。I/O 多路复用的流程：</p>
+<p>（1）当用户进程调用了 select，那么整个进程会被阻塞；</p>
+<p>（2）而同时，kernel 会“监视”所有 select 负责的 Socket；</p>
+<p>（3）当任何一个 Socket 中的数据准备好了，select 就会返回；</p>
+<p>（4）这个时候用户进程再调用 read 操作，将数据从 kernel 拷贝到用户进程。</p>
+<p>所以，<strong>I/O 多路复用的特点是通过一种机制一个进程能同时等待多个文件描述符，而这些文件描述符（套接字描述符）其中的任意一个进入读就绪状态，select() 函数就可以返回</strong>。</p>
+<p>这个图和 Blocking I/O 的图其实并没有太大的不同，事实上，还更差一些。因为这里需要使用两个 system call (select 和 recvfrom)，而 Blocking I/O 只调用了一个 system call (recvfrom)。但是，用 select 的优势在于它可以同时处理多个连接。</p>
+<p>所以，如果处理的连接数不是很高的话，使用 select/epoll 的 Webserver 不一定比使用<strong>多线程 + Blocking I/O</strong> 的 Webserver 性能更好，可能延迟还更大。select/epoll 的优势并不是对于单个连接能处理得更快，而是在于能处理更多的连接。</p>
+<p>在 I/O multiplexing 模型中，对于每一个 Socket，一般都设置成为 Non-blocking，但如上图所示，整个用户进程其实是一直被阻塞的，只不过进程是被 select 这个函数阻塞，而不是被 Socket I/O 操作给阻塞。</p>
+<h3 id="信号驱动-I-O（Signal-driven-I-O）"><a href="#信号驱动-I-O（Signal-driven-I-O）" class="headerlink" title="信号驱动 I/O（Signal driven I/O）"></a>信号驱动 I/O（Signal driven I/O）</h3><figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/signal.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p>（1）用户进程建立 sigio 的信号处理程序，系统调用 sigaction 执行信号处理函数（非阻塞，立刻返回）</p>
+<p>（2）当 kernel 中的数据准备好了，系统生成 sigio 信号，通过信号回调通知用户进程来读取数据；</p>
+<p>（3）这个时候用户进程再调用 read 操作，将数据从 kernel 拷贝到用户进程。</p>
+<h3 id="异步-I-O（Asynchronous-I-O）"><a href="#异步-I-O（Asynchronous-I-O）" class="headerlink" title="异步 I/O（Asynchronous I/O）"></a>异步 I/O（Asynchronous I/O）</h3><figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/02/19/Linux-I-O模型/asynchronous.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p>（1）用户进程发起 read 操作之后，立刻就可以开始去做其它的事；</p>
+<p>（2）而另一方面，从 kernel 的角度，当它收到一个 asynchronous read 操作之后，首先它会立刻返回，所以不会对用户进程产生任何阻塞；</p>
+<p>（3）然后 kernel 会等待数据准备完成，数据准备好后直接将数据拷贝到用户内存，当这一切都完成之后，kernel会给用户进程发送一个 signal，告诉用户进程 read 操作完成了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h3 id="Blocking-和-Non-blocking-的区别"><a href="#Blocking-和-Non-blocking-的区别" class="headerlink" title="Blocking 和 Non-blocking 的区别"></a>Blocking 和 Non-blocking 的区别</h3><p>使用 Blocking I/O 会一直阻塞住对应的进程直到操作完成，而 Non-blocking I/O 在 kernel 还没准备好数据的情况下会立刻返回。</p>
+<h3 id="Synchronous-和-Asynchronous-的区别"><a href="#Synchronous-和-Asynchronous-的区别" class="headerlink" title="Synchronous 和 Asynchronous 的区别"></a>Synchronous 和 Asynchronous 的区别</h3><p>在说明 Synchronous I/O 和 Asynchronous I/O 的区别之前，需要先给出两者的定义。POSIX 的定义是这样子的：</p>
+<ul>
+<li>A synchronous I/O operation causes the requesting process to be blocked until that I/O operation completes;</li>
+<li>An asynchronous I/O operation does not cause the requesting process to be blocked;</li>
+</ul>
+<p>两者的区别就在于 Synchronous I/O 进行 I/O 操作的时候会将进程阻塞。按照这个定义，之前所述的 Blocking I/O，Non-blocking I/O，I/O multiplexing 都属于 Synchronous I/O。</p>
+<p>有人会说 Non-blocking I/O 并没有被阻塞，然而这里有个非常“狡猾”的地方，定义中所指的 ”IO operation” 是指真实的 I/O 操作，就是例子中的 <strong>recvfrom</strong> 这个 system call。<strong>Bon-blocking I/O 在执行 recvfrom 这个system call的时候，如果 kernel 的数据没有准备好，这时候不会阻塞进程。但是，当 kernel 中数据准备好的时候，recvfrom 会将数据从 kernel 拷贝到用户内存中，这个时候进程是被阻塞的</strong>。</p>
+<p>而 Asynchronous I/O 则不一样，当进程发起 I/O 操作之后，就直接返回继续执行其他任务，直到 kernel 发送一个信号，告诉进程说 I/O 完成。在这整个过程中，进程完全没有被阻塞的。</p>
+<h3 id="Non-blocking-I-O-和-Asynchronous-I-O的区别"><a href="#Non-blocking-I-O-和-Asynchronous-I-O的区别" class="headerlink" title="Non-blocking I/O 和 Asynchronous I/O的区别"></a>Non-blocking I/O 和 Asynchronous I/O的区别</h3><p>可以发现 Non-blocking I/O 和 Asynchronous I/O 的区别还是很明显的。</p>
+<ul>
+<li>在 Non-blocking I/O 中，虽然进程大部分时间都不会被阻塞，但是它仍然要求进程主动的去检查数据是否准备好，并且当数据准备完成以后，也需要进程主动的再次调用 recvfrom 来将数据拷贝到用户内存。</li>
+<li>而 Asynchronous I/O 则完全不同。它就像是用户进程将整个 I/O 操作交给了他人（kernel）完成，然后他人做完后发信号通知。在此期间，用户进程不需要去检查 I/O 操作的状态，也不需要主动的去拷贝数据。</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>通俗易懂讲解IO模型：<a href="https://www.cnblogs.com/javalyy/p/8882066.html" target="_blank" rel="noopener">https://www.cnblogs.com/javalyy/p/8882066.html</a></li>
+<li>五种IO模型：<a href="https://blog.csdn.net/ZWE7616175/article/details/80591587" target="_blank" rel="noopener">https://blog.csdn.net/ZWE7616175/article/details/80591587</a></li>
+<li>IO模式和IO多路复用：<a href="https://www.cnblogs.com/zingp/p/6863170.html" target="_blank" rel="noopener">https://www.cnblogs.com/zingp/p/6863170.html</a></li>
+</ul>
+
+        </div>
+
+        <blockquote class="post-copyright">
+    
+    <div class="content">
+        
+
+        
+        如有疑问请联系作者，联系方式：weijia_sysu@163.com
+        
+    </div>
+    
+    <footer>
+        <a href="https://songkc.github.io">
+            <img src="/img/avatar.jpg" alt="Songkc">
+            Songkc
+        </a>
+    </footer>
+</blockquote>
+
+        
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;" class="page-reward-btn waves-effect waves-circle waves-light">赏</a>
+</div>
+
+
+
+        <div class="post-footer">
+            
+	<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/I-O/">I/O</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Linux/">Linux</a></li></ul>
+
+
+            
+<div class="page-share-wrap">
+    
+
+<div class="page-share" id="pageShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/02/19/Linux-I-O模型/&title=《Linux - I/O 模型》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/02/19/Linux-I-O模型/&title=《Linux - I/O 模型》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/02/19/Linux-I-O模型/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《Linux - I/O 模型》 — Songkc's Blog&url=https://songkc.github.io/2019/02/19/Linux-I-O模型/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/02/19/Linux-I-O模型/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+
+    <a href="javascript:;" id="shareFab" class="page-share-fab waves-effect waves-circle">
+        <i class="icon icon-share-alt icon-lg"></i>
+    </a>
+</div>
+
+
+
+        </div>
+    </div>
+
+    
+<nav class="post-nav flex-row flex-justify-between">
+  
+    <div class="waves-block waves-effect prev">
+      <a href="/2019/02/27/C++11-线程池/" id="post-prev" class="post-nav-link">
+        <div class="tips"><i class="icon icon-angle-left icon-lg icon-pr"></i> Prev</div>
+        <h4 class="title">C++11 - 线程池</h4>
+      </a>
+    </div>
+  
+
+  
+    <div class="waves-block waves-effect next">
+      <a href="/2018/12/29/C++11-Lambda表达式/" id="post-next" class="post-nav-link">
+        <div class="tips">Next <i class="icon icon-angle-right icon-lg icon-pl"></i></div>
+        <h4 class="title">C++11 - Lambda 表达式</h4>
+      </a>
+    </div>
+  
+</nav>
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+<div id="reward" class="page-modal reward-lay">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <h3 class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        谢谢大爷~
+        <i class="icon icon-quote-right"></i>
+    </h3>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/img/wechat.png" alt="打赏二维码">
+        </div>
+        
+        <label class="reward-toggle">
+            <input id="rewardToggle" type="checkbox" class="reward-toggle-check" data-wechat="/img/wechat.png" data-alipay="/img/alipay.png">
+            <div class="reward-toggle-ctrol">
+                <span class="reward-toggle-item wechat">微信</span>
+                <span class="reward-toggle-label"></span>
+                <span class="reward-toggle-item alipay">支付宝</span>
+            </div>
+        </label>
+        
+    </div>
+</div>
+
+
+
+</div>
+
+        <!-- <footer class="footer">
+    <div class="top">
+        
+
+        <p>
+            
+                <span><a href="/atom.xml" target="_blank" class="rss" title="rss"><i class="icon icon-lg icon-rss"></i></a></span>
+            
+            <span>This blog is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</span>
+        </p>
+    </div>
+    <div class="bottom">
+        <p><span>Songkc &copy; 2015 - 2019</span>
+            <span>
+                
+                Power by <a href="http://hexo.io/" target="_blank">Hexo</a> Theme <a href="https://github.com/yscoder/hexo-theme-indigo" target="_blank">indigo</a>
+            </span>
+        </p>
+    </div>
+</footer> -->
+
+    </main>
+    <div class="mask" id="mask"></div>
+<a href="javascript:;" id="gotop" class="waves-effect waves-circle waves-light"><span class="icon icon-lg icon-chevron-up"></span></a>
+
+
+
+<div class="global-share" id="globalShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/02/19/Linux-I-O模型/&title=《Linux - I/O 模型》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/02/19/Linux-I-O模型/&title=《Linux - I/O 模型》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/02/19/Linux-I-O模型/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《Linux - I/O 模型》 — Songkc's Blog&url=https://songkc.github.io/2019/02/19/Linux-I-O模型/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/02/19/Linux-I-O模型/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+<div class="page-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGCAAAAACs8KCBAAACLklEQVR42u3aS27DMAxF0e5/0+44CCrfR8oFTF2PAsRRfDwg+Pv5wdf1dX1/S+5c37P+1YZLhgwZr2Vcy4s/XO1fOOzmGWTIkHEA468/Xn9O7ySBlZ8gQ4YMGeQ4jkFBU4YMGTK2Btx1MrcOzbXTZMiQISM9Li1rawXqI7W4DBkyXsjgzbL///zIfEOGDBmvYlzhtU7OSCK460k+TpYhQ8ZoRtpKI+sRvCTmLwiNFmTIkDGU0Qmsu5YzyFrYDUyGDBkHMGrLEDwR5IVr+tuPgCtDhoyhjP5j8RN4WllsvcmQIWMogyeFTzxorZRFM1gZMmQMYqSJIE/dOu224kqHDBkyDmB0ikw+aOycfxN8ZciQMZSRtvj5CgUvTdOFjGCEKUOGjBEMvuDVedDav8RDCxkyZAxl1JK/JwrUtMUmQ4aMcxi19hZfAuP3pAH65jXJkCFjEIOndLyhxtcyeDMO9QtlyJAxlLGtDg6b+7VX0BpqypAhYwSjNnRMi9KUlIZ4GTJkTGV0EsTafgfBxG04GTJkHMaoHV0bKvCmG1q2kCFDxmhG+rMg6wyL4eLIU4YMGUMZV3jVWmy1lQueIMqQIWM2ox/sOs01vlQR74zIkCFjHIMEWXIcSRx5Ey0O9DJkyDiAQVr5nXZ/OhAloV+GDBkyatklD6MEScYPMmTIkJEGx87CBB9kbgu4MmTIeBWDhMJd3+7Cy5Ah4xwGLx3T4WUtiJNiuDjUlCFDxvsYv/4iYL4PpPc3AAAAAElFTkSuQmCC" alt="微信分享二维码">
+</div>
+
+
+
+
+    <script src="//cdn.bootcss.com/node-waves/0.7.4/waves.min.js"></script>
+<script>
+var BLOG = { ROOT: '/', SHARE: true, REWARD: true };
+
+
+</script>
+
+<script src="/js/main.min.js?v=1.7.2"></script>
+
+
+<div class="search-panel" id="search-panel">
+    <ul class="search-result" id="search-result"></ul>
+</div>
+<template id="search-tpl">
+<li class="item">
+    <a href="{path}" class="waves-block waves-effect">
+        <div class="title ellipsis" title="{title}">{title}</div>
+        <div class="flex-row flex-middle">
+            <div class="tags ellipsis">
+                {tags}
+            </div>
+            <time class="flex-col time">{date}</time>
+        </div>
+    </a>
+</li>
+</template>
+
+<script src="/js/search.min.js?v=1.7.2" async></script>
+
+
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+
+
+
+
+<script>
+(function() {
+    var OriginTitile = document.title, titleTime;
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            document.title = 'o(一︿一+)o 死鬼去哪里了！';
+            clearTimeout(titleTime);
+        } else {
+            document.title = 'ヽ(✿ﾟ▽ﾟ)ノ 咦!回来了!';
+            titleTime = setTimeout(function() {
+                document.title = OriginTitile;
+            },2000);
+        }
+    });
+})();
+</script>
+
+
+
+</body>
+</html>

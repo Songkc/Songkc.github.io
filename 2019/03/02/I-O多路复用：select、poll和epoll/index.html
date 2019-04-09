@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+    
+
+    
+
+    
+
+
+
+    <meta charset="utf-8">
+    
+    
+    
+    
+    <title>I/O 多路复用：select、poll 和 epoll | Songkc&#39;s Blog | Talk is cheap, show me the code.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="theme-color" content="#3F51B5">
+    
+    
+    <meta name="keywords" content="I/O">
+    <meta name="description" content="I/O 多路复用I/O 多路复用实际上就是用 select, poll, epoll 监听多个 I/O 对象，当 I/O 对象有变化（有数据）的时候就通知用户进程。好处就是单个进程可以处理多个 Socket。I/O 多路复用的流程：">
+<meta name="keywords" content="I&#x2F;O">
+<meta property="og:type" content="article">
+<meta property="og:title" content="I&#x2F;O 多路复用：select、poll 和 epoll">
+<meta property="og:url" content="https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/index.html">
+<meta property="og:site_name" content="Songkc&#39;s Blog">
+<meta property="og:description" content="I/O 多路复用I/O 多路复用实际上就是用 select, poll, epoll 监听多个 I/O 对象，当 I/O 对象有变化（有数据）的时候就通知用户进程。好处就是单个进程可以处理多个 Socket。I/O 多路复用的流程：">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/multiplexing.png">
+<meta property="og:image" content="https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/poll.png">
+<meta property="og:updated_time" content="2019-04-09T10:02:55.574Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="I&#x2F;O 多路复用：select、poll 和 epoll">
+<meta name="twitter:description" content="I/O 多路复用I/O 多路复用实际上就是用 select, poll, epoll 监听多个 I/O 对象，当 I/O 对象有变化（有数据）的时候就通知用户进程。好处就是单个进程可以处理多个 Socket。I/O 多路复用的流程：">
+<meta name="twitter:image" content="https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/multiplexing.png">
+    
+        <link rel="alternate" type="application/atom+xml" title="Songkc&#39;s Blog" href="/atom.xml">
+    
+    <link rel="shortcut icon" href="/img/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css?v=1.7.2">
+    <script>window.lazyScripts=[]</script>
+
+    <!-- custom head -->
+    
+
+</head>
+
+<body>
+    <div id="loading" class="active"></div>
+
+    <aside id="menu">
+  <div class="inner flex-row-vertical">
+    <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menu-off">
+        <i class="icon icon-lg icon-close"></i>
+    </a>
+    <div class="brand-wrap" style="background-image:url(/img/brand.jpg)">
+      <div class="brand">
+        <a href="/" class="avatar waves-effect waves-circle waves-light">
+          <img src="/img/avatar.jpg">
+        </a>
+        <hgroup class="introduce">
+          <h5 class="nickname">Songkc</h5>
+          <a href="mailto:weijia_sysu@163.com" title="weijia_sysu@163.com" class="mail">weijia_sysu@163.com</a>
+        </hgroup>
+      </div>
+    </div>
+    <div class="scroll-wrap flex-col">
+      <ul class="nav">
+        
+            <li class="waves-block waves-effect">
+              <a href="/">
+                <i class="icon icon-lg icon-home"></i>
+                Home
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/archives/">
+                <i class="icon icon-lg icon-archives"></i>
+                Archives
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/tags/">
+                <i class="icon icon-lg icon-tags"></i>
+                Tags
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/categories/">
+                <i class="icon icon-lg icon-th-list"></i>
+                Categories
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="https://github.com/songkc" target="_blank">
+                <i class="icon icon-lg icon-github"></i>
+                Github
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/about/">
+                <i class="icon icon-lg icon-user"></i>
+                About
+              </a>
+            </li>
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+
+    <main id="main">
+        <header class="top-header" id="header">
+    <div class="flex-row">
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light on" id="menu-toggle">
+          <i class="icon icon-lg icon-navicon"></i>
+        </a>
+        <div class="flex-col header-title ellipsis">I/O 多路复用：select、poll 和 epoll</div>
+        
+        <div class="search-wrap" id="search-wrap">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+                <i class="icon icon-lg icon-chevron-left"></i>
+            </a>
+            <input type="text" id="key" class="search-input" autocomplete="off" placeholder="Search">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="search">
+                <i class="icon icon-lg icon-search"></i>
+            </a>
+        </div>
+        
+        
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menuShare">
+            <i class="icon icon-lg icon-share-alt"></i>
+        </a>
+        
+    </div>
+</header>
+<header class="content-header post-header">
+
+    <div class="container fade-scale">
+        <h1 class="title">I/O 多路复用：select、poll 和 epoll</h1>
+        <h3 class="subtitle">
+            
+                <time datetime="2019-03-01T17:03:44.000Z" itemprop="datePublished" class="page-time">
+  2019-03-02
+</time>
+
+
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/I-O/">I/O</a></li></ul>
+
+            
+        
+    </h3></div>
+
+    
+
+
+</header>
+
+
+<div class="container body-wrap">
+    
+    <aside class="post-widget">
+        <nav class="post-toc-wrap post-toc-shrink" id="post-toc">
+            <h4>TOC</h4>
+            <ol class="post-toc"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#I-O-多路复用"><span class="post-toc-number">1.</span> <span class="post-toc-text">I/O 多路复用</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#select、poll-和-epoll-概述"><span class="post-toc-number">1.1.</span> <span class="post-toc-text">select、poll 和 epoll 概述</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#select"><span class="post-toc-number">2.</span> <span class="post-toc-text">select</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#select-介绍"><span class="post-toc-number">2.1.</span> <span class="post-toc-text">select 介绍</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#select-接口"><span class="post-toc-number">2.2.</span> <span class="post-toc-text">select 接口</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#select-总结"><span class="post-toc-number">2.3.</span> <span class="post-toc-text">select 总结</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#poll"><span class="post-toc-number">3.</span> <span class="post-toc-text">poll</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#poll-介绍"><span class="post-toc-number">3.1.</span> <span class="post-toc-text">poll 介绍</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#poll-接口"><span class="post-toc-number">3.2.</span> <span class="post-toc-text">poll 接口</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#poll-总结"><span class="post-toc-number">3.3.</span> <span class="post-toc-text">poll 总结</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#epoll"><span class="post-toc-number">4.</span> <span class="post-toc-text">epoll</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#epoll-介绍"><span class="post-toc-number">4.1.</span> <span class="post-toc-text">epoll 介绍</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#epoll-接口"><span class="post-toc-number">4.2.</span> <span class="post-toc-text">epoll 接口</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#LT-和-ET-模式"><span class="post-toc-number">4.3.</span> <span class="post-toc-text">LT 和 ET 模式</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#epoll-总结"><span class="post-toc-number">4.4.</span> <span class="post-toc-text">epoll 总结</span></a></li></ol></li><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#参考"><span class="post-toc-number">5.</span> <span class="post-toc-text">参考</span></a></li></ol>
+        </nav>
+    </aside>
+
+
+<article id="post-I-O多路复用：select、poll和epoll" class="post-article article-type-post fade" itemprop="blogPost">
+
+    <div class="post-card">
+        <h1 class="post-card-title">I/O 多路复用：select、poll 和 epoll</h1>
+        <div class="post-meta">
+            <time class="post-time" title="2019-03-02 01:03:44" datetime="2019-03-01T17:03:44.000Z" itemprop="datePublished">2019-03-02</time>
+
+            
+	<ul class="article-category-list"><li class="article-category-list-item"><a class="article-category-list-link" href="/categories/I-O/">I/O</a></li></ul>
+
+
+
+            
+
+        </div>
+        <div class="post-content" id="post-content" itemprop="postContent">
+            <h2 id="I-O-多路复用"><a href="#I-O-多路复用" class="headerlink" title="I/O 多路复用"></a>I/O 多路复用</h2><p>I/O 多路复用实际上就是用 <strong>select, poll, epoll</strong> 监听多个 I/O 对象，当 I/O 对象有变化（有数据）的时候就通知用户进程。好处就是单个进程可以处理多个 Socket。I/O 多路复用的流程：</p>
+<figure class="image-bubble">
+                <div class="img-lightbox">
+                    <div class="overlay"></div>
+                    <img src="/2019/03/02/I-O多路复用：select、poll和epoll/multiplexing.png" alt="" title="">
+                </div>
+                <div class="image-caption"></div>
+            </figure>
+<p><strong>当用户进程调用了 select，那么整个进程会被阻塞</strong>，而同时，内核会“监视” select 负责的文件描述符集合，当集合中任何一个的数据准备好了，select 就会返回。这个时候用户进程再调用 read 操作，将数据从内核空间拷贝到用户进程。</p>
+<p>所以，I/O 多路复用的特点是通过一种机制使得一个进程或一个线程能同时等待多个文件描述符的 I/O 操作，而这些文件描述符其中的任意一个进入读就绪状态，select() 函数就可以返回。这样，多个描述符的 I/O 操作都能在一个进程或线程内并发交替地顺序完成，这就叫 I/O 多路复用，这里的“复用”指的是复用同一个进程或线程。</p>
+<h3 id="select、poll-和-epoll-概述"><a href="#select、poll-和-epoll-概述" class="headerlink" title="select、poll 和 epoll 概述"></a>select、poll 和 epoll 概述</h3><p>select，poll，epoll 都是 I/O 多路复用的机制。I/O 多路复用就是通过一种机制，可以监视多个描述符，一旦某个文件描述符就绪（一般是读就绪或者写就绪），能够通知程序进行相应的读写操作，也就是说它们的职责不是进行 I/O 操作，而是帮助调用者寻找当前就绪的设备。<strong>但 select，poll，epoll 本质上都是同步 I/O，因为他们都需要在读写事件就绪后自己负责进行读写，也就是说这个读写过程是阻塞的</strong>，而异步 I/O 则无需自己负责进行读写，异步 I/O 的实现会负责把数据从内核拷贝到用户空间。</p>
+<h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><h3 id="select-介绍"><a href="#select-介绍" class="headerlink" title="select 介绍"></a>select 介绍</h3><p>select 函数在一段指定时间内，监听用户感兴趣的一组支持非阻塞的 I/O 文件描述符上的可读、可写和异常事件，直至某一个文件描述符触发了事件或者超过了指定的等待时间。select 能够监视的文件描述符的数量存在最大限制，通常是 1024。</p>
+<h3 id="select-接口"><a href="#select-接口" class="headerlink" title="select 接口"></a>select 接口</h3><p>函数原型如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回值：正常工作返回就绪描述符的数目，超时返回0，出错返回-1</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">select</span><span class="params">(<span class="keyword">int</span> maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset, <span class="keyword">const</span> struct timeval *timeout)</span></span></span><br></pre></td></tr></table></figure>
+<p>函数参数介绍如下：</p>
+<ul>
+<li><p>第一个参数 <strong>maxfdp1</strong> 指定待测试的文件描述符个数，它的值是待测试的最大文件描述符加 1（因此把该参数命名为 maxfdp1），文件描述字 0、1、2 … maxfdp1-2、maxfdp1-1 均将被测试（因为文件描述符是从0开始的）。</p>
+</li>
+<li><p>中间的三个参数 readset、writeset 和 exceptset 是指定我们要让内核测试读、写和异常条件的文件描述符的集合。如果并不需要监听某一个，就可以把它设为空指针。</p>
+<p><strong>struct fd_set</strong> 结构体是文件描述符集，该结构体实际上是一个整型数组，数组中的每个元素的每一位标记一个文件描述符。fd_set 能容纳的文件描述符数量由 FD_SETSIZE 指定，一般情况下，FD_SETSIZ E等于1024，这就限制了 select 能同时处理的文件描述符的总量。struct fd_set 可通过以下四个函数进行操作：</p>
+<ul>
+<li>void FD_ZERO(fd_set *fdset);           // 清空集合</li>
+<li>void FD_SET(int fd, fd_set *fdset);   // 将一个给定的文件描述符加入集合之中</li>
+<li>void FD_CLR(int fd, fd_set *fdset);   // 将一个给定的文件描述符从集合中删除</li>
+<li>int FD_ISSET(int fd, fd_set *fdset);   // 检查集合中指定的文件描述符是否可以读写 </li>
+</ul>
+</li>
+<li><p>timeout 则是告知内核等待所指定描述字中的任何一个就绪可花多少时间。<strong>struct timeval</strong> 结构用于指定这段时间的秒数和微秒数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> &#123;</span></span><br><span class="line">    <span class="keyword">long</span> tv_sec;   <span class="comment">//seconds</span></span><br><span class="line">    <span class="keyword">long</span> tv_usec;  <span class="comment">//microseconds</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个参数有三种可能：</p>
+<ul>
+<li>永远等待下去：仅在有一个文件描述符准备好 I/O 时才返回。只要将该参数设置为空指针 NULL。</li>
+<li>等待一段固定时间：在有一个描述字准备好 I/O 时返回，但是不超过由该参数所指向的 <strong>struct timeval</strong> 结构中指定的秒数和微秒数。</li>
+<li>根本不等待：检查文件描述符后立即返回，这称为轮询。为此，该参数必须指向一个 <strong> struct timeval</strong> 结构，而且其中的定时器值必须为 0。</li>
+</ul>
+</li>
+</ul>
+<h3 id="select-总结"><a href="#select-总结" class="headerlink" title="select 总结"></a>select 总结</h3><p>select 创建了 3 个文件描述符集合（fd_set）并拷贝到内核中，分别监听读、写、异常事件。select 可以监听的文件描述符数量受到单个进程所能打开的文件描述符的限制，默认为 1024，采用轮询方式遍历所有的文件描述符，最后返回一个文件描述符是否就绪的 mask 掩码，并根据 mask 掩码给 fd_set 赋值。将之前的 fd_set 拷贝传出到用户态并返回就绪的文件描述符的总个数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。应用程序索引就绪文件描述符的时间复杂度是 O(n)。再次调用 select 时，需要将新的 fd_set 监听文件描述符集合再次拷贝传入内核同时 select 只能工作在效率相对较低的 LT 模式下。</p>
+<h2 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h2><h3 id="poll-介绍"><a href="#poll-介绍" class="headerlink" title="poll 介绍"></a>poll 介绍</h3><p>poll 的机制与 select 类似，与 select 在本质上没有太大差别，同时管理多个文件描述符也是进行轮询，根据描述符的状态进行处理，但是 poll 相比 select 没有最大文件描述符数量的限制。但 poll 和 select 同样存在一个缺点就是，包含大量文件描述符的数组被整体复制于用户态和内核态的地址空间之间，而不论这些文件描述符是否就绪，它的开销随着文件描述符数量的增加而线性增大。</p>
+<h3 id="poll-接口"><a href="#poll-接口" class="headerlink" title="poll 接口"></a>poll 接口</h3><p>函数格式如下所示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># <span class="meta-keyword">include</span> <span class="meta-string">&lt;poll.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回值：正常工作返回就绪描述符的数目，超时返回0，出错返回-1</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">poll</span><span class="params">(struct pollfd *fds, <span class="keyword">unsigned</span> <span class="keyword">int</span> nfds, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>函数参数介绍如下：</p>
+<ul>
+<li><p>第一个参数 fds 是指向一个结构体数组的第一个元素的指针，每个元素都是一个 <strong>struct pollfd</strong> 结构，用于指定测试某个给定描述符的条件。</p>
+<p>每一个 <strong>struct pollfd</strong> 结构体指定一个被监视的文件描述符，每个结构体的 events 域是监视该文件描述符的事件类型，由用户来设置这个域。revents 域是文件描述符的操作结果事件类型，内核在调用返回时设置这个域。events 域中请求的任何事件类型都可能在 revents 域中返回。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> fd;             <span class="comment">/* 文件描述符 */</span></span><br><span class="line">    <span class="keyword">short</span> events;       <span class="comment">/* 等待的事件 */</span></span><br><span class="line">    <span class="keyword">short</span> revents;      <span class="comment">/* 实际发生了的事件 */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>poll 的事件类型：</p>
+<p><img src="/2019/03/02/I-O多路复用：select、poll和epoll/poll.png" alt=""></p>
+</li>
+<li><p>第二个参数 nfds 是要监听的文件描述符的个数，也就是数组 fds 的元素个数。</p>
+</li>
+<li><p>第三个参数 timeout 意义与 select 相同。timeout 参数指定等待的毫秒数，无论 I/O 是否准备好，poll 都会返回。timeout 指定为负数值表示无限等待，使 poll 一直挂起直到一个指定事件发生；timeout 为 0 指示 poll 调用立即返回并列出准备好 I/O 的文件描述符，但并不等待其它的事件。这种情况下，poll 就像它的名字那样，一旦选举出来，立即返回。</p>
+</li>
+</ul>
+<h3 id="poll-总结"><a href="#poll-总结" class="headerlink" title="poll 总结"></a>poll 总结</h3><p>使用 poll 和 select 不一样，你不需要显式地请求异常情况报告。POLLIN | POLLPRI 等价于 select 的读事件，POLLOUT |POLLWRBAND 等价于 select 的写事件。POLLIN 等价于 POLLRDNORM |POLLRDBAND，而POLLOUT 则等价于 POLLWRNORM。例如，要同时监视一个文件描述符是否可读和可写，我们可以设置 events 为 POLLIN |POLLOUT。在 poll 返回时，我们可以检查 revents 中的标志，对应于文件描述符请求的 events 结构体。如果 POLLIN 事件被设置，则文件描述符可以被读取而不阻塞。如果 POLLOUT 被设置，则文件描述符可以写入而不导致阻塞。这些标志并不是互斥的：它们可能被同时设置，表示这个文件描述符的读取和写入操作都会正常返回而不阻塞。</p>
+<p>poll 将 struct pollfd 结构体数组拷贝到内核中进行监听。poll 采用链表 poll_list 来进行文件描述符的存储，因此poll 可以监听的文件描述符数量为系统可以打开的最大文件描述符数（65535）。与 select 一样采用轮询方式，查询每个文件描述符上的事件状态，如果就绪，内核就修改文件描述符对应的 revents 的值，而 events 成员保持不变，因此下次调用 poll 时，应用程序无需重置 pollfd 类型的事件集参数。将之前传入的 struct pollfd 结构体数组拷贝传出到用户态，并返回就绪文件描述符的总个数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判读。应用程序索引就绪文件描述符的时间复杂度是 O(n)。同样，poll 也只能工作在效率相对较低的 LT 模式下。</p>
+<h2 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h2><h3 id="epoll-介绍"><a href="#epoll-介绍" class="headerlink" title="epoll 介绍"></a>epoll 介绍</h3><p>epoll 是在 Linux 2.6 内核中提出的，是之前的 select 和 poll 的增强版本。相对于 select 和 poll 来说，epoll 在使用和实现上区别很大。首先，epoll 使用一组函数来完成，而不是单独的一个函数；其次，epoll 把用户关心的文件描述符上的事件放在内核里的一个事件表中，无须像 select 和 poll 那样每次调用都要重复传入文件描述符集合事件集，这样在用户空间和内核空间的复制只需一次。</p>
+<h3 id="epoll-接口"><a href="#epoll-接口" class="headerlink" title="epoll 接口"></a>epoll 接口</h3><p>epoll 操作过程需要三个接口，分别如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用成功返回一个文件描述符，失败返回-1并设置errno。</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_create</span><span class="params">(<span class="keyword">int</span> size)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调用成功返回0，调用失败返回-1并设置errno。</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, struct epoll_event *event)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 函数调用成功返回就绪文件描述符个数，失败返回-1并设置errno。</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event * events, <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>三个函数介绍如下：</p>
+<ul>
+<li><p><strong>int epoll_create(int size)：</strong>创建一个 epoll 的文件描述符，size 用来告诉内核需要监听的数目一共有多少。这个参数不同于 select 中的第一个参数，给出最大监听的 fd+1 的值。需要注意的是，当创建好 epoll 文件描述符后，它就是会占用一个 fd 值，在 Linux 下如果查看 /proc/进程id/fd/，是能够看到这个 fd 的，所以在使用完 epoll 后，必须调用 close() 关闭，否则可能导致文件描述符被耗尽。</p>
+</li>
+<li><p><strong>int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)：</strong>epoll 的事件注册函数，在使用epoll_ctl 时，是把 fd 添加、修改到内核事件表中，或从内核事件表中删除 fd 的事件。它与 select 不同是在并非监听事件时告诉内核要监听什么类型的事件，而是在这里先注册要监听的事件类型。第一个参数是epoll_create() 的返回值，第二个参数表示需要进行的动作，用三个宏来表示：</p>
+<ul>
+<li>EPOLL_CTL_ADD：往事件表中注册新的 fd 事件到 epfd 中；</li>
+<li>EPOLL_CTL_MOD：修改已经注册的 fd 上的监听事件；</li>
+<li>EPOLL_CTL_DEL：从 epfd 中删除一个 fd 注册的事件；</li>
+</ul>
+<p>第三个参数是需要监听的 fd，第四个参数是告诉内核需要监听什么事件类型，<strong>struct epoll_event</strong> 结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 感兴趣的事件和被触发的事件</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">epoll_event</span> &#123;</span></span><br><span class="line">    <span class="keyword">__uint32_t</span> events;  <span class="comment">/* Epoll events */</span></span><br><span class="line">    <span class="keyword">epoll_data_t</span> data;  <span class="comment">/* User data variable */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 保存触发事件的某个文件描述符相关的数据（与具体使用方式有关）</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">union</span> epoll_data &#123;</span><br><span class="line">    <span class="keyword">void</span> *ptr;</span><br><span class="line">    <span class="keyword">int</span>  fd;</span><br><span class="line">    <span class="keyword">uint32_t</span> u32;</span><br><span class="line">    <span class="keyword">uint64_t</span> u64;</span><br><span class="line">&#125; epoll_data;</span><br></pre></td></tr></table></figure>
+<p>events 可以是以下几个宏的集合：</p>
+<ul>
+<li>EPOLLIN ：表示对应的文件描述符可以读；</li>
+<li>EPOLLOUT：表示对应的文件描述符可以写；</li>
+<li>EPOLLPRI：表示对应的文件描述符有紧急的数据可读；</li>
+<li>EPOLLERR：表示对应的文件描述符发生错误；</li>
+<li>EPOLLHUP：表示对应的文件描述符被挂断；</li>
+<li>EPOLLET： 将 epoll 设为边缘触发（Edge Triggered）模式，这是相对于水平触发（Level Triggered）来说的；</li>
+<li>EPOLLONESHOT：只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个文件描述符的话，需要再次把这个文件描述符加入到 epoll 队列里。</li>
+</ul>
+</li>
+<li><p><strong>int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)：</strong>在一段时间内等待一组文件描述符上的事件发生，类似于 select 调用。参数 events 是一个传出型参数，epoll_wait 函数如果检测到事件就绪，就将所有就绪的事件从内核事件表（epfd 所指的文件）中复制到 events 指定的数组中，这个数组用来输出 epoll_wait 检测到的就绪事件，而不像 select 与 poll 那样，这也是 epoll 与前者最大的区别。maxevents 告诉内核这个需要监听的事件表 events 有多大，这个 maxevents 的值不能大于创建 epoll_create() 时的 size，参数 timeout 是超时时间（单位毫秒，0 会立即返回，-1 时调用将永远阻塞，直到某个事件发生）。该函数返回需要处理的事件数目，如返回 0 表示已超时。</p>
+</li>
+</ul>
+<h3 id="LT-和-ET-模式"><a href="#LT-和-ET-模式" class="headerlink" title="LT 和 ET 模式"></a>LT 和 ET 模式</h3><p>epoll 对文件描述符的操作有两种模式：LT（level trigger）和ET（edge trigger）。LT 模式是默认模式，LT 模式与 ET 模式的区别如下：</p>
+<ul>
+<li><strong>LT 模式：</strong>当 epoll_wait 检测到文件描述符事件发生并将此事件通知应用程序，应用程序可以不立即处理该事件。下次调用 epoll_wait 时，会再次响应应用程序并通知此事件。</li>
+<li><strong>ET 模式：</strong>当 epoll_wait 检测到文件描述符事件发生并将此事件通知应用程序，应用程序必须立即处理该事件。如果不处理，下次调用 epoll_wait 时，不会再次响应应用程序并通知此事件。</li>
+</ul>
+<p>LT（level triggered）是缺省的工作方式，并且同时支持阻塞和非阻塞。在这种做法中，内核通知进程一个文件描述符是否就绪了，然后进程可以对这个就绪的文件描述符进行 I/O 操作。如果不作任何操作，下一次内核还是会继续通知你的。</p>
+<p>ET（edge triggered）是高速工作方式，只支持非阻塞。在这种模式下，当描述符从未就绪变为就绪时，内核通过 epoll 通知进程。然后它会假设进程知道文件描述符已经就绪，并且不会再为那个文件描述符发送更多的就绪通知，直到进程进行了某些操作导致那个文件描述符不再为就绪状态了。但是请注意，如果一直不对这个文件描述符进行 I/O 操作从而导致它再次变成未就绪，内核是不会发送更多的通知（only once）。</p>
+<p><strong>ET 模式在很大程度上减少了使用 epoll 时文件描述符事件被重复触发的次数，因此效率要比 LT 模式高。</strong>在网络编程中，epoll 工作在 ET 模式的时候，必须使用非阻塞套接口，以避免由于一个文件描述符的阻塞读或阻塞写操作把处理多个文件描述符的任务饿死。</p>
+<h3 id="epoll-总结"><a href="#epoll-总结" class="headerlink" title="epoll 总结"></a>epoll 总结</h3><p>epoll 执行 epoll_create() 函数时会在内核创建一颗红黑树 rb_node 以及就绪链表 rdllist (存放已经就绪的文件描述符)，可以监听的文件描述符数量可以达到系统可以打开的最大文件描述符数（65535）。接着用户执行的epoll_ctl() 函数将 epoll_event 结构体拷贝传入内核，内核会在红黑树上添加相应的结点，并注册回调函数 ep_poll_callback()，内核在检测到某文件描述符可读或可写时就调用回调函数 callback，该回调函数将文件描述符放入就绪链表 rdllist 中。epoll_wait() 函数只需要观察 rdllist 中有无就绪的文件描述符即可，内核将就绪的文件描述符事件复制到传入的 epoll_event 结构体数组中返回给用户空间，所以用户只用直接遍历数组依次处理即可，即应用程序索引就绪文件描述符的时间复杂度是 O(1)。这里返回的文件描述符是通过内存映射（mmap）技术让内核和用户空间共享同一块内存传递的，减少了不必要的拷贝。再次调用 epoll 系统调用，不用重建红黑树，直接沿用已经存在的即可。epoll 支持ET模式，当内核将该事件通知给用户后，用户必须立即处理，这样就减少了可读、可写和异常事件被触发的次数。</p>
+<p>详细的关于 select、poll 和 epoll 的比较会在下次分析。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>IO多路复用之select总结：<a href="https://www.cnblogs.com/Anker/p/3258674.html" target="_blank" rel="noopener">https://www.cnblogs.com/Anker/p/3258674.html</a></li>
+<li>IO多路复用之poll总结：<a href="https://www.cnblogs.com/Anker/p/3261006.html" target="_blank" rel="noopener">https://www.cnblogs.com/Anker/p/3261006.html</a></li>
+<li>IO多路复用之epoll总结：<a href="https://www.cnblogs.com/Anker/p/3263780.html" target="_blank" rel="noopener">https://www.cnblogs.com/Anker/p/3263780.html</a></li>
+<li>Linux IO模式及 select、poll、epoll详解：<a href="https://segmentfault.com/a/1190000003063859" target="_blank" rel="noopener">https://segmentfault.com/a/1190000003063859</a></li>
+<li>为什么epoll比select和poll更高效：<a href="https://blog.csdn.net/qq_36953135/article/details/77823893" target="_blank" rel="noopener">https://blog.csdn.net/qq_36953135/article/details/77823893</a></li>
+</ul>
+
+        </div>
+
+        <blockquote class="post-copyright">
+    
+    <div class="content">
+        
+
+        
+        如有疑问请联系作者，联系方式：weijia_sysu@163.com
+        
+    </div>
+    
+    <footer>
+        <a href="https://songkc.github.io">
+            <img src="/img/avatar.jpg" alt="Songkc">
+            Songkc
+        </a>
+    </footer>
+</blockquote>
+
+        
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;" class="page-reward-btn waves-effect waves-circle waves-light">赏</a>
+</div>
+
+
+
+        <div class="post-footer">
+            
+	<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/I-O/">I/O</a></li></ul>
+
+
+            
+<div class="page-share-wrap">
+    
+
+<div class="page-share" id="pageShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/&title=《I/O 多路复用：select、poll 和 epoll》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/&title=《I/O 多路复用：select、poll 和 epoll》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《I/O 多路复用：select、poll 和 epoll》 — Songkc's Blog&url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+
+    <a href="javascript:;" id="shareFab" class="page-share-fab waves-effect waves-circle">
+        <i class="icon icon-share-alt icon-lg"></i>
+    </a>
+</div>
+
+
+
+        </div>
+    </div>
+
+    
+<nav class="post-nav flex-row flex-justify-between">
+  
+    <div class="waves-block waves-effect prev">
+      <a href="/2019/03/22/剑指Offer-二叉树的镜像/" id="post-prev" class="post-nav-link">
+        <div class="tips"><i class="icon icon-angle-left icon-lg icon-pr"></i> Prev</div>
+        <h4 class="title">剑指Offer - 二叉树的镜像</h4>
+      </a>
+    </div>
+  
+
+  
+    <div class="waves-block waves-effect next">
+      <a href="/2019/02/27/C++11-线程池/" id="post-next" class="post-nav-link">
+        <div class="tips">Next <i class="icon icon-angle-right icon-lg icon-pl"></i></div>
+        <h4 class="title">C++11 - 线程池</h4>
+      </a>
+    </div>
+  
+</nav>
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+<div id="reward" class="page-modal reward-lay">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <h3 class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        谢谢大爷~
+        <i class="icon icon-quote-right"></i>
+    </h3>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/img/wechat.png" alt="打赏二维码">
+        </div>
+        
+        <label class="reward-toggle">
+            <input id="rewardToggle" type="checkbox" class="reward-toggle-check" data-wechat="/img/wechat.png" data-alipay="/img/alipay.png">
+            <div class="reward-toggle-ctrol">
+                <span class="reward-toggle-item wechat">微信</span>
+                <span class="reward-toggle-label"></span>
+                <span class="reward-toggle-item alipay">支付宝</span>
+            </div>
+        </label>
+        
+    </div>
+</div>
+
+
+
+</div>
+
+        <!-- <footer class="footer">
+    <div class="top">
+        
+
+        <p>
+            
+                <span><a href="/atom.xml" target="_blank" class="rss" title="rss"><i class="icon icon-lg icon-rss"></i></a></span>
+            
+            <span>This blog is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</span>
+        </p>
+    </div>
+    <div class="bottom">
+        <p><span>Songkc &copy; 2015 - 2019</span>
+            <span>
+                
+                Power by <a href="http://hexo.io/" target="_blank">Hexo</a> Theme <a href="https://github.com/yscoder/hexo-theme-indigo" target="_blank">indigo</a>
+            </span>
+        </p>
+    </div>
+</footer> -->
+
+    </main>
+    <div class="mask" id="mask"></div>
+<a href="javascript:;" id="gotop" class="waves-effect waves-circle waves-light"><span class="icon icon-lg icon-chevron-up"></span></a>
+
+
+
+<div class="global-share" id="globalShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/&title=《I/O 多路复用：select、poll 和 epoll》 — Songkc's Blog&pic=https://songkc.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/&title=《I/O 多路复用：select、poll 和 epoll》 — Songkc's Blog&source=Songkc's Blog" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《I/O 多路复用：select、poll 和 epoll》 — Songkc's Blog&url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/&via=https://songkc.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://songkc.github.io/2019/03/02/I-O多路复用：select、poll和epoll/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+<div class="page-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAADeCAAAAAB3DOFrAAACuUlEQVR42u3aQW7jMAwF0N7/0p1tgamT/0mp0wGeV0GT2nxaSDTJj4/4+vxyff3L0+e/r1Pffty48PDw8Bah3w5rE27yxG/uiYeHh3eNl9wu2XVf/z3fvTfx4OHh4f023hOj3fpneDw8PLz/kdciN+x24fDw8PB+krcvKCQJcf5tsnyHay14eHh4MW9WQv23n6/09/Dw8PDWXfW2RNtu009pdzuU8PhcPDw8vAu8fMN9Cvc18mypdxgnHh4e3lFeEvTs2EgWJT8q2rvh4eHh/TwvaiyVZdy2ZNyWcQ/MJuDh4eHFvE1ba5ZeJ+DZANbjuwIeHh7eId6+wDpr3m8wh7t5eHh4eOuBgGRzn90zT9DzplrU38PDw8M7ymuLCJtEuR0FmJVF8PDw8G7zktf4fXNrNp6VLNCb5cbDw8O7xks25faXm8Ju+/Sov4eHh4d3lDdLnWdDA22ttT1mHs89PDw8vKO8JDnOCwrtmNRmdODNf+Hh4eFd4OVFhFkyPVvE2VOG6TUeHh7eiJcnx7MQ8+S43dWjCPHw8PCu8WaPz1PnfJlmyffjgYGHh4d3gbdPfNsGfz5wcGCmDA8PD+8a73b5tW2qzY6ZqJiLh4eHt+C1ZYh9gWAW7qzNhoeHh3eDl2yvs1T7TbetbJvtR7Xw8PDwzvLy0Dcd+SRpnh1R0UwEHh4e3gVeUj5INv22GdaWiVdDV3h4eHhHeUn6ux+WGlaX46iKyQg8PDy8Ee+zvPKUt96+18MB33yLh4eHd4HXbrvJTdvhgDwRbwcO8PDw8O7xNq/9+7JsvqDDgwEPDw/vGq9t6u8HDurphrIEjIeHh/d7eLNfJnl9jixSdjw8PLxfwMu39bYovL9zXRXGw8PDW/A2QbTp9etDYpa+vzkY8PDw8I7y2hf+NojNtl4fA/uJLTw8PLxX1x+Np0EF0KYUGwAAAABJRU5ErkJggg==" alt="微信分享二维码">
+</div>
+
+
+
+
+    <script src="//cdn.bootcss.com/node-waves/0.7.4/waves.min.js"></script>
+<script>
+var BLOG = { ROOT: '/', SHARE: true, REWARD: true };
+
+
+</script>
+
+<script src="/js/main.min.js?v=1.7.2"></script>
+
+
+<div class="search-panel" id="search-panel">
+    <ul class="search-result" id="search-result"></ul>
+</div>
+<template id="search-tpl">
+<li class="item">
+    <a href="{path}" class="waves-block waves-effect">
+        <div class="title ellipsis" title="{title}">{title}</div>
+        <div class="flex-row flex-middle">
+            <div class="tags ellipsis">
+                {tags}
+            </div>
+            <time class="flex-col time">{date}</time>
+        </div>
+    </a>
+</li>
+</template>
+
+<script src="/js/search.min.js?v=1.7.2" async></script>
+
+
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+});
+
+MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+        all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+});
+</script>
+
+<script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+
+
+
+
+<script>
+(function() {
+    var OriginTitile = document.title, titleTime;
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            document.title = 'o(一︿一+)o 死鬼去哪里了！';
+            clearTimeout(titleTime);
+        } else {
+            document.title = 'ヽ(✿ﾟ▽ﾟ)ノ 咦!回来了!';
+            titleTime = setTimeout(function() {
+                document.title = OriginTitile;
+            },2000);
+        }
+    });
+})();
+</script>
+
+
+
+</body>
+</html>

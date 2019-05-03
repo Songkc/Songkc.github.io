@@ -38,7 +38,7 @@
 <meta property="og:image" content="https://songkc.github.io/2019/02/25/Reactor模式/basic.png">
 <meta property="og:image" content="https://songkc.github.io/2019/02/25/Reactor模式/threadpool.png">
 <meta property="og:image" content="https://songkc.github.io/2019/02/25/Reactor模式/multiple.png">
-<meta property="og:updated_time" content="2019-04-05T18:49:18.246Z">
+<meta property="og:updated_time" content="2019-05-03T11:11:36.444Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Reactor 模式">
 <meta name="twitter:description" content="什么是 Reactor 模式反应器设计模式（Reactor pattern）是一种为处理并发服务请求，并将请求提交到一个或者多个服务处理程序的事件设计模式。当客户端请求抵达后，服务处理程序使用多路分配策略，由一个非阻塞的线程来接收所有的请求，然后派发这些请求至相关的工作线程进行处理。">
@@ -271,7 +271,7 @@
                 </div>
                 <div class="image-caption"></div>
             </figure>
-<h3 id="基础-Reactor-设计（Basic-Reactor-Design）"><a href="#基础-Reactor-设计（Basic-Reactor-Design）" class="headerlink" title="基础 Reactor 设计（Basic Reactor Design）"></a>基础 Reactor 设计（Basic Reactor Design）</h3><p>单线程版的 Reactor 模式如下图所示。对于客户端的所以请求，都又一个专门的线程去进行处理，这个线程无线循环去监听是否又客户的请求到来，一旦收到客户端的请求，就将其分发给响应的处理器进行处理。</p>
+<h3 id="基础-Reactor-设计（Basic-Reactor-Design）"><a href="#基础-Reactor-设计（Basic-Reactor-Design）" class="headerlink" title="基础 Reactor 设计（Basic Reactor Design）"></a>基础 Reactor 设计（Basic Reactor Design）</h3><p>单线程版的 Reactor 模式如下图所示。对于客户端的所有请求，都有一个专门的线程去进行处理，这个线程无限循环去监听是否有来自客户端的请求到来，一旦收到客户端的请求，就将其分发给相应的处理器进行处理。</p>
 <figure class="image-bubble">
                 <div class="img-lightbox">
                     <div class="overlay"></div>
